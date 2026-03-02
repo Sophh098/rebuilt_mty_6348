@@ -45,7 +45,7 @@ public class RobotContainer {
     private final IntakeSubsystem intake = new IntakeSubsystem();
     private final ShooterSubsystem shooterSubsystem = new ShooterSubsystem();
 
-    
+
     public RobotContainer() {
         configureBindings();
     }
@@ -97,37 +97,30 @@ public class RobotContainer {
     //ADDONS
 
        // A button = intake
-driver.a().whileTrue(new StartEndCommand(
-    () -> intake.intake(),   // Se ejecuta mientras se mantiene presionado
-    () -> intake.stopRoller(), // Se ejecuta cuando se suelta
-    intake
-));
-
-// B button = outtake
-driver.b().whileTrue(new StartEndCommand(
-    () -> intake.outtake(),
-    () -> intake.stopRoller(),
-    intake
+       driver.a().whileTrue(new StartEndCommand(
+        () -> intake.intake(),   // Se ejecuta mientras se mantiene presionado
+        () -> intake.stopRoller(), // Se ejecuta cuando se suelta
+         intake));
 
     
-));
- 
-
-// Right Trigger = Shooter Velocity
-driver.rightTrigger()
-    .whileTrue(
+      // B button = outtake
+      driver.b().whileTrue(new StartEndCommand(
+         () -> intake.outtake(),
+         () -> intake.stopRoller(),
+         intake));
+         
+    // Right Trigger = Shooter Velocity
+    driver.rightTrigger().whileTrue(
         Commands.run(() -> {
             double targetRPS = ShooterConstants.kShooterRPM / 60.0;
             shooterSubsystem.runShooterRPS(targetRPS);
-        }, shooterSubsystem)
-    )
-    .onFalse(
-        Commands.runOnce(() -> shooterSubsystem.stopAll(), shooterSubsystem)
-    );
+        }, shooterSubsystem) )
+        .onFalse(
+        Commands.runOnce(() -> shooterSubsystem.stopAll(), shooterSubsystem) );
 
-// Left Trigger = Indexer
-driver.leftTrigger()
-    .whileTrue(
+
+    // Left Trigger = Indexer
+    driver.leftTrigger().whileTrue(
         Commands.run(() -> shooterSubsystem.runIndexer(0.6), shooterSubsystem)
     )
     .onFalse(
