@@ -1,150 +1,207 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
+// File: src/main/java/frc/robot/RobotContainer.java
 package frc.robot;
-
-import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.revrobotics.spark.SparkLowLevel;
+import com.revrobotics.spark.SparkMax;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.XboxController;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-import frc.robot.subsystems.IntakeSubsystem;
-import frc.robot.subsystems.ShooterSubsystem;
-import frc.robot.Constants.ShooterConstants;
-import frc.robot.generated.TunerConstants;
-import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.Climber.ClimberSubsystem;
+import frc.robot.Constants.FieldCosntants;
+import frc.robot.Constants.IntakeConstants;
+import frc.robot.Constants.VisionConstants;
+import frc.robot.Drive.CommandSwerveDrivetrain;
+import frc.robot.Drive.generated.TunerConstants;
+import frc.robot.Intake.IntakeSubsystem;
+import frc.robot.Shooting.HoodSubsystem;
+import frc.robot.Shooting.ShootingHelper;
+import frc.robot.Vision.VisionHardwareFactoryImpl;
+import frc.robot.Vision.VisionStandardDeviationModel;
+import frc.robot.Vision.VisionSubsystem;
 
 public class RobotContainer {
-    private double MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
-    private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
 
-    /* Setting up bindings for necessary control of the swerve drive platform */
-    private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-            .withDeadband(MaxSpeed * 0.05).withRotationalDeadband(MaxAngularRate * 0.05) // Add a 10% deadband
-            .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
-    private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
-    private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
+    private final double maximumSpeedMetersPerSecond =
+        1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
 
-    private final Telemetry logger = new Telemetry(MaxSpeed);
+    private final double maximumAngularRateRadiansPerSecond =
+        RotationsPerSecond.of(0.75).in(RadiansPerSecond);
 
-    private final CommandXboxController joystick = new CommandXboxController(0);
-    private final CommandXboxController driver = new CommandXboxController(1);
+    private final SwerveRequest.FieldCentric fieldCentricDriveRequest =
+        new SwerveRequest.FieldCentric()
+            .withDeadband(maximumSpeedMetersPerSecond * 0.05)
+            .withRotationalDeadband(maximumAngularRateRadiansPerSecond * 0.05)
+            .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
-    public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
-    private final IntakeSubsystem intake = new IntakeSubsystem();
-    private final ShooterSubsystem shooterSubsystem = new ShooterSubsystem();
+    private final SwerveRequest.SwerveDriveBrake brakeRequest =
+        new SwerveRequest.SwerveDriveBrake();
 
+    private final SwerveRequest.PointWheelsAt pointWheelsRequest =
+        new SwerveRequest.PointWheelsAt();
+
+    private final Telemetry telemetry = new Telemetry(maximumSpeedMetersPerSecond);
+
+    private final CommandXboxController driverController =
+        new CommandXboxController(0);
+
+    private final CommandXboxController addOnsController =
+        new CommandXboxController(1);
+
+    public final CommandSwerveDrivetrain drivetrain =
+        TunerConstants.createDrivetrain();
+
+    // ---------------- Vision ----------------
+
+    private final VisionStandardDeviationModel visionStandardDeviationModel =
+        new VisionStandardDeviationModel(
+            VisionConstants.MAXIMUM_AMBIGUITY_FOR_SINGLE_TAG,
+            VisionConstants.MAXIMUM_Z_ERROR_METERS,
+            VisionConstants.MAXIMUM_OBSERVATION_AGE_SECONDS,
+            VisionConstants.MAXIMUM_DISTANCE_FOR_SINGLE_TAG_METERS,
+            VisionConstants.MAXIMUM_DISTANCE_FOR_MULTI_TAG_METERS,
+            VisionConstants.MAXIMUM_YAW_RATE_RADIANS_PER_SECOND,
+            VisionConstants.MAXIMUM_LINEAR_STANDARD_DEVIATION_METERS,
+            VisionConstants.MAXIMUM_ANGULAR_STANDARD_DEVIATION_RADIANS
+        );
+
+    private final VisionHardwareFactoryImpl visionHardwareFactory =
+        new VisionHardwareFactoryImpl(false);
+
+    private final VisionSubsystem visionSubsystem;
+
+    // ---------------- Shooting ----------------
+
+    private final ShootingHelper shootingHelper =
+        new ShootingHelper(FieldCosntants.IS_ANDYMARK_FIELD);
+
+    private final HoodSubsystem hoodSubsystem;
+
+    // ---------------- Intake ----------------
+
+    private final SparkMax intakeRollerMotorController =
+        new SparkMax(IntakeConstants.ROLLER_MOTOR_ID, SparkLowLevel.MotorType.kBrushless);
+
+    private final SparkMax intakePivotMotorController =
+        new SparkMax(IntakeConstants.PIVOT_MOTOR_ID, SparkLowLevel.MotorType.kBrushless);
+
+    private final IntakeSubsystem intakeSubsystem =
+        new IntakeSubsystem(intakeRollerMotorController, intakePivotMotorController);
+
+    // ---------------- Climber ----------------
+
+    private final SparkMax leftClimberMotorController =
+        new SparkMax(frc.robot.Constants.ClimberConstants.LEFT_CLIMBER_MOTOR_ID, SparkLowLevel.MotorType.kBrushless);
+
+    private final SparkMax rightClimberMotorController =
+        new SparkMax(frc.robot.Constants.ClimberConstants.RIGHT_CLIMBER_MOTOR_ID, SparkLowLevel.MotorType.kBrushless);
+
+    private final ClimberSubsystem climberSubsystem =
+        new ClimberSubsystem(leftClimberMotorController, rightClimberMotorController);
 
     public RobotContainer() {
+        hoodSubsystem = new HoodSubsystem();
+
+        visionSubsystem =
+            createVisionSubsystem();
+
         configureBindings();
+    }
+
+    private VisionSubsystem createVisionSubsystem() {
+        // You need a real AprilTagFieldLayout reference here.
+        // I assume you already have it in VisionConstants.
+        AprilTagFieldLayout aprilTagFieldLayout = FieldCosntants.IS_ANDYMARK_FIELD ? AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark) : AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+
+        VisionSubsystem.VisionPoseMeasurementConsumer visionPoseMeasurementConsumer =
+            (visionRobotPose, timestampSeconds, visionMeasurementStandardDeviations) ->
+                drivetrain.addVisionMeasurement(visionRobotPose, timestampSeconds, visionMeasurementStandardDeviations);
+
+        return new VisionSubsystem(
+            aprilTagFieldLayout,
+            FieldCosntants.FIELD_LENGTH_METERS,
+            FieldCosntants.FIELD_WIDTH_METERS,
+            drivetrain::getPose,
+            drivetrain::getYawRateRadiansPerSecond,
+            visionPoseMeasurementConsumer,
+            visionStandardDeviationModel,
+            VisionConstants.cameraSpecificationsList,
+            visionHardwareFactory
+        );
     }
 
     private void configureBindings() {
 
-
-
-
-
-        // Note that X is defined as forward according to WPILib convention,
-        // and Y is defined as to the left according to WPILib convention.
         drivetrain.setDefaultCommand(
-            // Drivetrain will execute this command periodically
             drivetrain.applyRequest(() ->
-                drive.withVelocityX(-joystick.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
-                    .withVelocityY(-joystick.getLeftX() * MaxSpeed) // Drive left with negative X (left)
-                    .withRotationalRate(-joystick.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
+                fieldCentricDriveRequest
+                    .withVelocityX(-driverController.getLeftY() * maximumSpeedMetersPerSecond)
+                    .withVelocityY(-driverController.getLeftX() * maximumSpeedMetersPerSecond)
+                    .withRotationalRate(-driverController.getRightX() * maximumAngularRateRadiansPerSecond)
             )
         );
 
-        // Idle while the robot is disabled. This ensures the configured
-        // neutral mode is applied to the drive motors while disabled.
-        final var idle = new SwerveRequest.Idle();
+        final var idleRequest = new SwerveRequest.Idle();
         RobotModeTriggers.disabled().whileTrue(
-            drivetrain.applyRequest(() -> idle).ignoringDisable(true)
+            drivetrain.applyRequest(() -> idleRequest).ignoringDisable(true)
         );
 
-        joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
-        joystick.b().whileTrue(drivetrain.applyRequest(() ->
-            point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
-        ));
-
-        // Run SysId routines when holding back/start and X/Y.
-        // Note that each routine should be run exactly once in a single log.
-        joystick.back().and(joystick.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-        joystick.back().and(joystick.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-        joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
-        joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-
-        // Reset the field-centric heading on left bumper press.
-        joystick.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
-
-        drivetrain.registerTelemetry(logger::telemeterize);
-
-        joystick.y()
-    .onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
-
-    //ADDONS
-
-       // A button = intake
-       driver.a().whileTrue(new StartEndCommand(
-        () -> intake.intake(),   // Se ejecuta mientras se mantiene presionado
-        () -> intake.stopRoller(), // Se ejecuta cuando se suelta
-         intake));
-
-    
-      // B button = outtake
-      driver.b().whileTrue(new StartEndCommand(
-         () -> intake.outtake(),
-         () -> intake.stopRoller(),
-         intake));
-         
-    // Right Trigger = Shooter Velocity
-    driver.rightTrigger().whileTrue(
-        Commands.run(() -> {
-            double targetRPS = ShooterConstants.kShooterRPM / 60.0;
-            shooterSubsystem.runShooterRPS(targetRPS);
-        }, shooterSubsystem) )
-        .onFalse(
-        Commands.runOnce(() -> shooterSubsystem.stopAll(), shooterSubsystem) );
-
-
-    // Left Trigger = Indexer
-    driver.leftTrigger().whileTrue(
-        Commands.run(() -> shooterSubsystem.runIndexer(0.6), shooterSubsystem)
-    )
-    .onFalse(
-        Commands.runOnce(() -> shooterSubsystem.runIndexer(0), shooterSubsystem)
-    );
-
-
-    }
-    public Command getAutonomousCommand() {
-        // Simple drive forward auton
-        final var idle = new SwerveRequest.Idle();
-        return Commands.sequence(
-            // Reset our field centric heading to match the robot
-            // facing away from our alliance station wall (0 deg).
-            drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero)),
-            // Then slowly drive forward (away from us) for 5 seconds.
+        addOnsController.a().whileTrue(drivetrain.applyRequest(() -> brakeRequest));
+        addOnsController.b().whileTrue(
             drivetrain.applyRequest(() ->
-                drive.withVelocityX(0.5)
-                    .withVelocityY(0)
-                    .withRotationalRate(0)
+                pointWheelsRequest.withModuleDirection(
+                    new Rotation2d(-addOnsController.getLeftY(), -addOnsController.getLeftX())
+                )
             )
-            .withTimeout(5.0),
-            // Finally idle for the rest of auton
-            drivetrain.applyRequest(() -> idle)
+        );
+
+        addOnsController.back().and(addOnsController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+        addOnsController.back().and(addOnsController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+        addOnsController.start().and(addOnsController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+        addOnsController.start().and(addOnsController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+
+        driverController.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+        driverController.y().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+
+        drivetrain.registerTelemetry(telemetry::telemeterize);
+
+        // ---------------- Intake bindings (example, simple) ----------------
+        // Adjust buttons to your preference.
+        // driverController.rightBumper().onTrue(new frc.robot.Intake.DeployIntakeCmd(intakeSubsystem));
+        // driverController.leftBumper().onTrue(new frc.robot.Intake.RetractIntakeCmd(intakeSubsystem));
+        // driverController.rightTrigger().whileTrue(new frc.robot.Intake.ActivateIntakeCmd(intakeSubsystem));
+
+        // ---------------- Climber bindings (example) ----------------
+        // addOnsController.rightBumper().onTrue(new frc.robot.Climber.ExpandClimberCmd(climberSubsystem));
+        // addOnsController.leftBumper().onTrue(new frc.robot.Climber.RetractClimberCmd(climberSubsystem));
+
+        // ---------------- Hood / shooting bindings (example) ----------------
+        // If you have a HoodCmd that uses vision + helper, bind it here.
+        // driverController.leftTrigger().whileTrue(new frc.robot.Shooting.HoodCmd(hoodSubsystem, visionSubsystem, shootingHelper));
+    }
+
+    public Command getAutonomousCommand() {
+        final var idleRequest = new SwerveRequest.Idle();
+
+        return Commands.sequence(
+            drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero)),
+            drivetrain.applyRequest(() ->
+                fieldCentricDriveRequest
+                    .withVelocityX(0.5)
+                    .withVelocityY(0.0)
+                    .withRotationalRate(0.0)
+            ).withTimeout(5.0),
+            drivetrain.applyRequest(() -> idleRequest)
         );
     }
 }
