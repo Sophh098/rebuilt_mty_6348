@@ -498,6 +498,7 @@ public class Constants {
         public static final int ROLLER_MOTOR_ID = 23;
         public static final int PIVOT_INTAKE_RIGHT_MOTOR = 19;
         public static final int PIVOT_INTAKE_LEFT_MOTOR = 18;
+        public static final boolean PIVOT_RIGHT_MOTOR_INVERTED = false;
 
 
     }

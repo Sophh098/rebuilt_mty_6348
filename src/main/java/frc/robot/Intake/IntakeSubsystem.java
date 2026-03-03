@@ -10,7 +10,6 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
 import frc.robot.Constants.IntakeConstants;
 
 public final class IntakeSubsystem extends SubsystemBase {
@@ -22,17 +21,21 @@ public final class IntakeSubsystem extends SubsystemBase {
     private final Debouncer rollerMotorConnectedDebouncer =
         new Debouncer(0.5, Debouncer.DebounceType.kFalling);
 
-    private final Debouncer pivotMotorConnectedDebouncer =
+    private final Debouncer pivotMotorLeftConnectedDebouncer =
+        new Debouncer(0.5, Debouncer.DebounceType.kFalling);
+
+    private final Debouncer pivotMotorRightConnectedDebouncer =
         new Debouncer(0.5, Debouncer.DebounceType.kFalling);
 
     private boolean rollerMotorConnected = false;
     private boolean pivotMotorLeftConnected = false;
-    private boolean pivotMotorRightConnected = true;
+    private boolean pivotMotorRightConnected = false;
 
     private double rollerVelocityRotationsPerSecond = 0.0;
     private double rollerAppliedVolts = 0.0;
     private double rollerCurrentAmps = 0.0;
 
+    // Measured from the LEFT pivot motor encoder (leader)
     private double pivotRawEncoderPositionRotations = 0.0;
     private double pivotRawEncoderVelocityRotationsPerSecond = 0.0;
 
@@ -60,7 +63,11 @@ public final class IntakeSubsystem extends SubsystemBase {
     // Placeholder until you wire a real sensor
     private boolean fuelDetectedInsideIntake = false;
 
-    public IntakeSubsystem(SparkMax rollerMotorController, SparkMax pivotMotorRightController, SparkMax pivotMotorLeftController) {
+    public IntakeSubsystem(
+        SparkMax rollerMotorController,
+        SparkMax pivotMotorRightController,
+        SparkMax pivotMotorLeftController
+    ) {
         this.rollerMotorController = rollerMotorController;
         this.pivotMotorLeftController = pivotMotorLeftController;
         this.pivotMotorRightController = pivotMotorRightController;
@@ -89,7 +96,6 @@ public final class IntakeSubsystem extends SubsystemBase {
 
     private void readHardwareInputs() {
         boolean rollerHadAnyError = false;
-        boolean pivotHadAnyError = false;
 
         // ---------------- Roller ----------------
         var rollerEncoder = rollerMotorController.getEncoder();
@@ -100,7 +106,7 @@ public final class IntakeSubsystem extends SubsystemBase {
         );
         if (rollerVelocityRaw != null) {
             rollerVelocityRotationsPerSecond =
-                convertSparkVelocityToRotationsPerSecond(rollerVelocityRaw.doubleValue());
+                convertSparkVelocityToRotationsPerSecond(rollerVelocityRaw);
         } else {
             rollerHadAnyError = true;
         }
@@ -114,7 +120,7 @@ public final class IntakeSubsystem extends SubsystemBase {
             rollerMotorController::getBusVoltage
         );
         if (rollerAppliedOutput != null && rollerBusVoltage != null) {
-            rollerAppliedVolts = rollerAppliedOutput.doubleValue() * rollerBusVoltage.doubleValue();
+            rollerAppliedVolts = rollerAppliedOutput * rollerBusVoltage;
         } else {
             rollerHadAnyError = true;
         }
@@ -124,40 +130,53 @@ public final class IntakeSubsystem extends SubsystemBase {
             rollerMotorController::getOutputCurrent
         );
         if (rollerCurrent != null) {
-            rollerCurrentAmps = rollerCurrent.doubleValue();
+            rollerCurrentAmps = rollerCurrent;
         } else {
             rollerHadAnyError = true;
         }
 
         rollerMotorConnected = rollerMotorConnectedDebouncer.calculate(!rollerHadAnyError);
 
-        // ---------------- Pivot ----------------
-        var pivotEncoder = pivotMotorLeftController.getEncoder();
+        // ---------------- Pivot (2 motor controllers) ----------------
+        boolean pivotLeftHadAnyError = false;
+        boolean pivotRightHadAnyError = false;
 
-        Double pivotPositionRaw = readDoubleIfNoError(
+        var pivotLeftEncoder = pivotMotorLeftController.getEncoder();
+
+        Double pivotPositionRawLeft = readDoubleIfNoError(
             pivotMotorLeftController,
-            () -> pivotEncoder.getPosition()
-            pivotMotorRightController,
-            () -> pivotEncoder.getPosition()
+            () -> pivotLeftEncoder.getPosition()
         );
-        if (pivotPositionRaw != null) {
-            pivotRawEncoderPositionRotations = pivotPositionRaw.doubleValue();
+        if (pivotPositionRawLeft != null) {
+            pivotRawEncoderPositionRotations = pivotPositionRawLeft;
         } else {
-            pivotHadAnyError = true;
+            pivotLeftHadAnyError = true;
+            pivotRawEncoderPositionRotations = 0.0;
         }
 
-        Double pivotVelocityRaw = readDoubleIfNoError(
+        Double pivotVelocityRawLeft = readDoubleIfNoError(
             pivotMotorLeftController,
-            () -> pivotEncoder.getVelocity()
+            () -> pivotLeftEncoder.getVelocity()
         );
-        if (pivotVelocityRaw != null) {
+        if (pivotVelocityRawLeft != null) {
             pivotRawEncoderVelocityRotationsPerSecond =
-                convertSparkVelocityToRotationsPerSecond(pivotVelocityRaw.doubleValue());
+                convertSparkVelocityToRotationsPerSecond(pivotVelocityRawLeft);
         } else {
-            pivotHadAnyError = true;
+            pivotLeftHadAnyError = true;
+            pivotRawEncoderVelocityRotationsPerSecond = 0.0;
         }
 
-        pivotMotorLeftConnected = pivotMotorConnectedDebouncer.calculate(!pivotHadAnyError);
+        // Touch the RIGHT controller at least once per loop so getLastError() is meaningful
+        Double pivotRightBusVoltage = readDoubleIfNoError(
+            pivotMotorRightController,
+            pivotMotorRightController::getBusVoltage
+        );
+        if (pivotRightBusVoltage == null) {
+            pivotRightHadAnyError = true;
+        }
+
+        pivotMotorLeftConnected = pivotMotorLeftConnectedDebouncer.calculate(!pivotLeftHadAnyError);
+        pivotMotorRightConnected = pivotMotorRightConnectedDebouncer.calculate(!pivotRightHadAnyError);
 
         // Raw -> normalized
         pivotNormalizedPositionRotations =
@@ -186,11 +205,19 @@ public final class IntakeSubsystem extends SubsystemBase {
     private void stopAllMotorsAndResetController() {
         rollerMotorController.setVoltage(0.0);
         pivotMotorLeftController.setVoltage(0.0);
-        pivotMotorRightController.setVoltage(0);
+        pivotMotorRightController.setVoltage(0.0);
         pivotPositionFeedbackController.reset();
     }
 
     private void applyPivotClosedLoopControl() {
+        // If we cannot trust the encoder (left motor disconnected), do not run closed loop.
+        if (!pivotMotorLeftConnected) {
+            pivotMotorLeftController.setVoltage(0.0);
+            pivotMotorRightController.setVoltage(0.0);
+            pivotPositionFeedbackController.reset();
+            return;
+        }
+
         double measuredNormalizedPositionRotations = pivotNormalizedPositionRotations;
 
         double clampedTargetNormalizedRotations =
@@ -213,7 +240,11 @@ public final class IntakeSubsystem extends SubsystemBase {
                 IntakeConstants.PIVOT_CONTROL_MAXIMUM_ABSOLUTE_VOLTAGE_VOLTS
             );
 
+        double rightMotorCommandedVolts =
+            IntakeConstants.PIVOT_RIGHT_MOTOR_INVERTED ? -totalCommandedVolts : totalCommandedVolts;
+
         pivotMotorLeftController.setVoltage(totalCommandedVolts);
+        pivotMotorRightController.setVoltage(rightMotorCommandedVolts);
     }
 
     private void applyRollerControl() {
@@ -284,6 +315,14 @@ public final class IntakeSubsystem extends SubsystemBase {
         return pivotTargetNormalizedPositionRotationsRequest;
     }
 
+    public boolean isPivotMotorLeftConnected() {
+        return pivotMotorLeftConnected;
+    }
+
+    public boolean isPivotMotorRightConnected() {
+        return pivotMotorRightConnected;
+    }
+
     // ---------------- Encoder utilities ----------------
 
     private void setPivotRawEncoderPositionRotations(double rawEncoderPositionRotations) {
@@ -330,5 +369,25 @@ public final class IntakeSubsystem extends SubsystemBase {
         }
 
         return rawEncoderVelocityRotationsPerSecond / denominator;
+    }
+
+    public boolean isRollerMotorConnected() {
+        return rollerMotorConnected;
+    }
+
+    public double getRollerVelocityRotationsPerSecond() {
+        return rollerVelocityRotationsPerSecond;
+    }
+
+    public double getRollerAppliedVolts() {
+        return rollerAppliedVolts;
+    }
+
+    public double getRollerCurrentAmps() {
+        return rollerCurrentAmps;
+    }
+
+    public double getPivotNormalizedVelocityRotationsPerSecond() {
+        return pivotNormalizedVelocityRotationsPerSecond;
     }
 }
