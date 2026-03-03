@@ -13,7 +13,6 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
 import frc.robot.Constants.FieldCosntants;
 
 public class VisionSubsystem extends SubsystemBase {
@@ -85,6 +84,11 @@ public class VisionSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         if (!visionEnabled || visionCameraList.isEmpty()) {
+            shootingTargetValidThisCycle = false;
+            return;
+        }
+
+        if (aprilTagFieldLayout == null) {
             shootingTargetValidThisCycle = false;
             return;
         }
@@ -220,5 +224,9 @@ public class VisionSubsystem extends SubsystemBase {
 
     public boolean itsAValidShootingTarget() {
         return shootingTargetValidThisCycle;
+    }
+
+    public AprilTagFieldLayout getAprilTagFieldLayout() {
+        return aprilTagFieldLayout;
     }
 }

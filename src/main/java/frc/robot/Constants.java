@@ -500,10 +500,41 @@ public class Constants {
     }
 
     public static final class ClimberConstants {
+
         public static final int LEFT_CLIMBER_MOTOR_ID = 20;
         public static final int RIGHT_CLIMBER_MOTOR_ID = 21;
 
         public static final double CLIMBER_MAX_DUTY_CYCLE = 0.8;
-        public static final double CLIMBER_EXTENDED_POSITION = 0;
+
+        // Positions (rotations)
+        public static final double CLIMBER_RETRACTED_TARGET_POSITION_ROTATIONS = 0.0;
+        public static final double CLIMBER_EXTENDED_POSITION_ROTATIONS = 0.0; // <-- AJUSTA esto (ahorita tienes 0)
+
+        // “Ya llegó” tolerance (rotations)
+        public static final double CLIMBER_POSITION_TOLERANCE_ROTATIONS = 0.05;
+
+        // Manual voltage scaling
+        public static final double CLIMBER_MANUAL_VOLTAGE_VOLTS =
+            Constants.BATTERY_VOLTAGE * CLIMBER_MAX_DUTY_CYCLE;
+
+        // PID gains
+        public static final double CLIMBER_POSITION_PROPORTIONAL_GAIN = 6.0;
+        public static final double CLIMBER_POSITION_INTEGRAL_GAIN = 0.0;
+        public static final double CLIMBER_POSITION_DERIVATIVE_GAIN = 0.2;
+
+        // Integrator clamp (volts)
+        public static final double CLIMBER_PID_INTEGRATOR_MINIMUM_VOLTS = -Constants.BATTERY_VOLTAGE;
+        public static final double CLIMBER_PID_INTEGRATOR_MAXIMUM_VOLTS = Constants.BATTERY_VOLTAGE;
+
+        // Output clamp (volts)
+        public static final double CLIMBER_OUTPUT_MINIMUM_VOLTS = -Constants.BATTERY_VOLTAGE;
+        public static final double CLIMBER_OUTPUT_MAXIMUM_VOLTS = Constants.BATTERY_VOLTAGE;
+
+        // Averaging factor (keep it explicit even if it’s “mathy”)
+        public static final double CLIMBER_AVERAGE_MULTIPLIER = 0.5;
+
+        private ClimberConstants() {
+            // Prevent instantiation
+        }
     }
 }

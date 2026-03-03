@@ -69,7 +69,7 @@ public class HoodSubsystem extends SubsystemBase {
     private double rightWheelVelocityRotationsPerSecond = 0.0;
 
     public HoodSubsystem() {
-        this(TunerConstants.kCANBus);
+        this(TunerConstants.CONTROLLER_AREA_NETWORK_BUS);
     }
 
     public HoodSubsystem(CANBus canBusName) {
