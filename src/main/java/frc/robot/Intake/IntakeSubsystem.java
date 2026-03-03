@@ -16,7 +16,8 @@ import frc.robot.Constants.IntakeConstants;
 public final class IntakeSubsystem extends SubsystemBase {
 
     private final SparkMax rollerMotorController;
-    private final SparkMax pivotMotorController;
+    private final SparkMax pivotMotorRightController;
+    private final SparkMax pivotMotorLeftController;
 
     private final Debouncer rollerMotorConnectedDebouncer =
         new Debouncer(0.5, Debouncer.DebounceType.kFalling);
@@ -25,7 +26,8 @@ public final class IntakeSubsystem extends SubsystemBase {
         new Debouncer(0.5, Debouncer.DebounceType.kFalling);
 
     private boolean rollerMotorConnected = false;
-    private boolean pivotMotorConnected = false;
+    private boolean pivotMotorLeftConnected = false;
+    private boolean pivotMotorRightConnected = true;
 
     private double rollerVelocityRotationsPerSecond = 0.0;
     private double rollerAppliedVolts = 0.0;
@@ -58,9 +60,10 @@ public final class IntakeSubsystem extends SubsystemBase {
     // Placeholder until you wire a real sensor
     private boolean fuelDetectedInsideIntake = false;
 
-    public IntakeSubsystem(SparkMax rollerMotorController, SparkMax pivotMotorController) {
+    public IntakeSubsystem(SparkMax rollerMotorController, SparkMax pivotMotorRightController, SparkMax pivotMotorLeftController) {
         this.rollerMotorController = rollerMotorController;
-        this.pivotMotorController = pivotMotorController;
+        this.pivotMotorLeftController = pivotMotorLeftController;
+        this.pivotMotorRightController = pivotMotorRightController;
 
         pivotPositionFeedbackController.setIntegratorRange(-12.0, 12.0);
     }
@@ -129,10 +132,12 @@ public final class IntakeSubsystem extends SubsystemBase {
         rollerMotorConnected = rollerMotorConnectedDebouncer.calculate(!rollerHadAnyError);
 
         // ---------------- Pivot ----------------
-        var pivotEncoder = pivotMotorController.getEncoder();
+        var pivotEncoder = pivotMotorLeftController.getEncoder();
 
         Double pivotPositionRaw = readDoubleIfNoError(
-            pivotMotorController,
+            pivotMotorLeftController,
+            () -> pivotEncoder.getPosition()
+            pivotMotorRightController,
             () -> pivotEncoder.getPosition()
         );
         if (pivotPositionRaw != null) {
@@ -142,7 +147,7 @@ public final class IntakeSubsystem extends SubsystemBase {
         }
 
         Double pivotVelocityRaw = readDoubleIfNoError(
-            pivotMotorController,
+            pivotMotorLeftController,
             () -> pivotEncoder.getVelocity()
         );
         if (pivotVelocityRaw != null) {
@@ -152,7 +157,7 @@ public final class IntakeSubsystem extends SubsystemBase {
             pivotHadAnyError = true;
         }
 
-        pivotMotorConnected = pivotMotorConnectedDebouncer.calculate(!pivotHadAnyError);
+        pivotMotorLeftConnected = pivotMotorConnectedDebouncer.calculate(!pivotHadAnyError);
 
         // Raw -> normalized
         pivotNormalizedPositionRotations =
@@ -180,7 +185,8 @@ public final class IntakeSubsystem extends SubsystemBase {
 
     private void stopAllMotorsAndResetController() {
         rollerMotorController.setVoltage(0.0);
-        pivotMotorController.setVoltage(0.0);
+        pivotMotorLeftController.setVoltage(0.0);
+        pivotMotorRightController.setVoltage(0);
         pivotPositionFeedbackController.reset();
     }
 
@@ -207,7 +213,7 @@ public final class IntakeSubsystem extends SubsystemBase {
                 IntakeConstants.PIVOT_CONTROL_MAXIMUM_ABSOLUTE_VOLTAGE_VOLTS
             );
 
-        pivotMotorController.setVoltage(totalCommandedVolts);
+        pivotMotorLeftController.setVoltage(totalCommandedVolts);
     }
 
     private void applyRollerControl() {
@@ -281,7 +287,7 @@ public final class IntakeSubsystem extends SubsystemBase {
     // ---------------- Encoder utilities ----------------
 
     private void setPivotRawEncoderPositionRotations(double rawEncoderPositionRotations) {
-        var pivotEncoder = pivotMotorController.getEncoder();
+        var pivotEncoder = pivotMotorLeftController.getEncoder();
         pivotEncoder.setPosition(rawEncoderPositionRotations);
     }
 

@@ -283,7 +283,7 @@ public class Constants {
         public static final List<VisionEntries.CameraSpecifications> cameraSpecificationsList =
             List.of(
                 new VisionEntries.CameraSpecifications(
-                    "FrontRightTagCam",
+                    "FRONTRIGHT_CAM",
                     new Transform3d(
                         new Translation3d(0.32, -0.32, 0.1778),
                         new Rotation3d(0, 0, 0)
@@ -292,7 +292,7 @@ public class Constants {
                     1.0
                 ),
                 new VisionEntries.CameraSpecifications(
-                    "FrontLeftTagCam",
+                    "FRONT_LEFT_CAM",
                     new Transform3d(
                         new Translation3d(0.32, 0.32, 0.1778),
                         new Rotation3d(0, 0, 0)
@@ -301,7 +301,7 @@ public class Constants {
                     0.8
                 ),
                 new VisionEntries.CameraSpecifications(
-                    "SideLeftTagCam",
+                    "LEFT_CAM",
                     new Transform3d(
                         new Translation3d(0.32, 0.32, 0.1778),
                         new Rotation3d(0, 0, Math.toRadians(90))
@@ -310,7 +310,7 @@ public class Constants {
                     0.8
                 ),
                 new VisionEntries.CameraSpecifications(
-                    "SideRightTagCam",
+                    "RIGHT_CAM",
                     new Transform3d(
                         new Translation3d(0.32, -0.32, 0.1778),
                         new Rotation3d(0, 0, Math.toRadians(-90))
@@ -354,8 +354,8 @@ public class Constants {
 
         public static final int HOOD_ANGLE_TALON_ID = 15;
         public static final int RIGHT_HOOD_PROPULSION_TALON_ID = 16;
-        public static final int LEFT_HOOD_PROPULSION_TALON_ID = 14;
-        public static final int INDEXER_TALON_ID = 17;
+        public static final int LEFT_HOOD_PROPULSION_TALON_ID = 17;
+        public static final int INDEXER_TALON_ID = 22;
 
         public static final Slot0Configs HOOD_ANGLE_SLOT_CONFIGS = new Slot0Configs()
             .withKS(0.1)
@@ -439,8 +439,9 @@ public class Constants {
 
     public static final class IntakeConstants {
 
-        public static final int INTAKE_MOTOR_ID = 19;
-        public static final int PIVOT_INTAKE_MOTOR_ID = 18;
+        public static final int INTAKE_MOTOR_ID = 23;
+        public static final int PIVOT_INTAKE__RIGHT_MOTOR_ID = 19;
+        public static final int PIVOT_INTAKE_LEFT_MOTOR_ID = 18;
 
         public static final double INTAKE_ACTIVATION_VOLTAGE_VOLTS = 12.0 * 0.6;
 
@@ -494,8 +495,10 @@ public class Constants {
         public static final double PIVOT_SIM_MIN_ANGLE_RADIANS = -0.2;
         public static final double PIVOT_SIM_MAX_ANGLE_RADIANS = 1.8;
         public static final double PIVOT_SIM_START_ANGLE_RADIANS = 0.0;
-        public static final int ROLLER_MOTOR_ID = 1;
-        public static final int PIVOT_MOTOR_ID = 1;
+        public static final int ROLLER_MOTOR_ID = 23;
+        public static final int PIVOT_INTAKE_RIGHT_MOTOR = 19;
+        public static final int PIVOT_INTAKE_LEFT_MOTOR = 18;
+
 
     }
 

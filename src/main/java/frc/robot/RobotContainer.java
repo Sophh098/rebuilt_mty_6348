@@ -89,14 +89,17 @@ public class RobotContainer {
 
     // ---------------- Intake ----------------
 
-    private final SparkMax intakeRollerMotorController =
+     private final SparkMax intakeRollerMotorController =
         new SparkMax(IntakeConstants.ROLLER_MOTOR_ID, SparkLowLevel.MotorType.kBrushless);
 
-    private final SparkMax intakePivotMotorController =
-        new SparkMax(IntakeConstants.PIVOT_MOTOR_ID, SparkLowLevel.MotorType.kBrushless);
+     private final SparkMax intakePivotMotorLeftController =
+        new SparkMax(IntakeConstants.PIVOT_INTAKE_LEFT_MOTOR, SparkLowLevel.MotorType.kBrushless);
 
-    private final IntakeSubsystem intakeSubsystem =
-        new IntakeSubsystem(intakeRollerMotorController, intakePivotMotorController);
+     private final SparkMax intakePivotMotorRightController =
+        new SparkMax(IntakeConstants.PIVOT_INTAKE_RIGHT_MOTOR, SparkLowLevel.MotorType.kBrushless);
+
+     private final IntakeSubsystem intakeSubsystem =
+        new IntakeSubsystem(intakeRollerMotorController, intakePivotMotorRightController, intakePivotMotorLeftController);
 
     // ---------------- Climber ----------------
 
@@ -141,6 +144,7 @@ public class RobotContainer {
     }
 
     private void configureBindings() {
+        
 
         drivetrain.setDefaultCommand(
             drivetrain.applyRequest(() ->
@@ -177,17 +181,17 @@ public class RobotContainer {
 
         // ---------------- Intake bindings (example, simple) ----------------
         // Adjust buttons to your preference.
-        // driverController.rightBumper().onTrue(new frc.robot.Intake.DeployIntakeCmd(intakeSubsystem));
-        // driverController.leftBumper().onTrue(new frc.robot.Intake.RetractIntakeCmd(intakeSubsystem));
-        // driverController.rightTrigger().whileTrue(new frc.robot.Intake.ActivateIntakeCmd(intakeSubsystem));
-
+        driverController.x().whileTrue(new frc.robot.Intake.ActivateIntakeCmd(intakeSubsystem));
+        driverController.rightBumper().onTrue(new frc.robot.Intake.DeployIntakeCmd(intakeSubsystem));
+        driverController.leftBumper().onTrue(new frc.robot.Intake.RetractIntakeCmd(intakeSubsystem));
+        
         // ---------------- Climber bindings (example) ----------------
-        // addOnsController.rightBumper().onTrue(new frc.robot.Climber.ExpandClimberCmd(climberSubsystem));
-        // addOnsController.leftBumper().onTrue(new frc.robot.Climber.RetractClimberCmd(climberSubsystem));
+        addOnsController.rightBumper().onTrue(new frc.robot.Climber.ExpandClimberCmd(climberSubsystem));
+        addOnsController.leftBumper().onTrue(new frc.robot.Climber.RetractClimberCmd(climberSubsystem));
 
         // ---------------- Hood / shooting bindings (example) ----------------
         // If you have a HoodCmd that uses vision + helper, bind it here.
-        // driverController.leftTrigger().whileTrue(new frc.robot.Shooting.HoodCmd(hoodSubsystem, visionSubsystem, shootingHelper));
+        driverController.rightTrigger().whileTrue(new frc.robot.Shooting.HoodCmd(hoodSubsystem, visionSubsystem, shootingHelper));
     }
 
     public Command getAutonomousCommand() {
