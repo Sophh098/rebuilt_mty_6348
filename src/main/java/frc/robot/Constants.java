@@ -272,8 +272,8 @@ public class Constants {
         public static final double MAXIMUM_EXIT_SPEED_METERS_PER_SECOND =
             MAX_RPM * EXIT_SPEED_CONVERSION * 0.60;
 
-        public static final double MINIMUM_HOOD_ANGLE_RADIANS = Math.toRadians(0.0);
-        public static final double MAXIMUM_HOOD_ANGLE_RADIANS = Math.toRadians(90.0);
+        public static final double MINIMUM_HOOD_ANGLE_RADIANS = Math.toRadians(24);
+        public static final double MAXIMUM_HOOD_ANGLE_RADIANS = Math.toRadians(98);
 
         public static final double MINIMUM_HORIZONTAL_DISTANCE_METERS = 0.1;
     }

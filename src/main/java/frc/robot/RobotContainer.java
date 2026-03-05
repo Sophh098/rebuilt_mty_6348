@@ -15,10 +15,9 @@ import static edu.wpi.first.units.Units.RotationsPerSecond;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Climber.ClimberSubsystem;
 import frc.robot.Constants.FieldCosntants;
+import frc.robot.Constants.HoodConstants;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.Drive.CommandSwerveDrivetrain;
@@ -26,6 +25,8 @@ import frc.robot.Drive.generated.TunerConstants;
 import frc.robot.Intake.IntakeSubsystem;
 import frc.robot.Shooting.HoodSubsystem;
 import frc.robot.Shooting.ShootingHelper;
+import frc.robot.Util.SparkMaxMotorTestCmd;
+import frc.robot.Util.TalonFxMotorTestCmd;
 import frc.robot.Vision.VisionHardwareFactoryImpl;
 import frc.robot.Vision.VisionStandardDeviationModel;
 import frc.robot.Vision.VisionSubsystem;
@@ -145,7 +146,7 @@ public class RobotContainer {
 
     private void configureBindings() {
         
-
+/* 
         drivetrain.setDefaultCommand(
             drivetrain.applyRequest(() ->
                 fieldCentricDriveRequest
@@ -191,7 +192,31 @@ public class RobotContainer {
 
         // ---------------- Hood / shooting bindings (example) ----------------
         // If you have a HoodCmd that uses vision + helper, bind it here.
-        driverController.rightTrigger().whileTrue(new frc.robot.Shooting.HoodCmd(hoodSubsystem, visionSubsystem, shootingHelper));
+        driverController.rightTrigger().whileTrue(new frc.robot.Shooting.HoodCmd(hoodSubsystem, visionSubsystem, shootingHelper));*/
+
+        new SparkMaxMotorTestCmd(
+            "LeftPivotIntake", 
+            IntakeConstants.PIVOT_INTAKE_LEFT_MOTOR_ID, 
+            () -> addOnsController.getLeftY(), 
+            false, 
+            0.4
+        ).execute();
+        new SparkMaxMotorTestCmd(
+            "RightPivotIntake", 
+            IntakeConstants.PIVOT_INTAKE__RIGHT_MOTOR_ID, 
+            () -> addOnsController.getLeftY(), 
+            true, 
+            0.4
+        ).execute();
+        new TalonFxMotorTestCmd(
+            "HoodAngleMotor", 
+            HoodConstants.HOOD_ANGLE_TALON_ID, 
+            () -> addOnsController.getRightY(), 
+            false, 
+            0.4
+        ).execute();
+
+        
     }
 
     public Command getAutonomousCommand() {
