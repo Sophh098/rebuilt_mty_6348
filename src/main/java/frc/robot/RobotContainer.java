@@ -1,35 +1,53 @@
 // File: src/main/java/frc/robot/RobotContainer.java
 package frc.robot;
 
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.SwerveRequest;
+
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.geometry.Rotation2d;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.Constants.FieldCosntants;
 import frc.robot.Constants.HoodConstants;
 import frc.robot.Constants.IntakeConstants;
+import frc.robot.Constants.VisionConstants;
+import frc.robot.Drive.CommandSwerveDrivetrain;
+import frc.robot.Drive.generated.TunerConstants;
 import frc.robot.Util.SparkMaxMotorTestCmd;
 import frc.robot.Util.TalonFxMotorTestCmd;
+import frc.robot.Vision.VisionHardwareFactoryImpl;
+import frc.robot.Vision.VisionStandardDeviationModel;
+import frc.robot.Vision.VisionSubsystem;
 
 public class RobotContainer {
 
-    // private final double maximumSpeedMetersPerSecond =
-    //     1.0 * TunerConstants.SPEED_AT_12_VOLTS.in(MetersPerSecond);
+    private final double maximumSpeedMetersPerSecond =
+        1.0 * TunerConstants.SPEED_AT_12_VOLTS.in(MetersPerSecond);
 
-    // private final double maximumAngularRateRadiansPerSecond =
-    //     RotationsPerSecond.of(0.75).in(RadiansPerSecond);
+    private final double maximumAngularRateRadiansPerSecond =
+        RotationsPerSecond.of(0.75).in(RadiansPerSecond);
 
-    // private final SwerveRequest.FieldCentric fieldCentricDriveRequest =
-    //     new SwerveRequest.FieldCentric()
-    //         .withDeadband(maximumSpeedMetersPerSecond * 0.05)
-    //         .withRotationalDeadband(maximumAngularRateRadiansPerSecond * 0.05)
-    //         .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+    private final SwerveRequest.FieldCentric fieldCentricDriveRequest =
+        new SwerveRequest.FieldCentric()
+            .withDeadband(maximumSpeedMetersPerSecond * 0.05)
+            .withRotationalDeadband(maximumAngularRateRadiansPerSecond * 0.05)
+            .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
-    // private final SwerveRequest.SwerveDriveBrake brakeRequest =
-    //     new SwerveRequest.SwerveDriveBrake();
+    private final SwerveRequest.SwerveDriveBrake brakeRequest =
+        new SwerveRequest.SwerveDriveBrake();
 
-    // private final SwerveRequest.PointWheelsAt pointWheelsRequest =
-    //     new SwerveRequest.PointWheelsAt();
+    private final SwerveRequest.PointWheelsAt pointWheelsRequest =
+        new SwerveRequest.PointWheelsAt();
 
-    // private final Telemetry telemetry = new Telemetry(maximumSpeedMetersPerSecond);
+    private final Telemetry telemetry = new Telemetry(maximumSpeedMetersPerSecond);
 
     private final CommandXboxController driverController =
         new CommandXboxController(0);
@@ -37,27 +55,27 @@ public class RobotContainer {
     private final CommandXboxController addOnsController =
         new CommandXboxController(1);
 
-    // public final CommandSwerveDrivetrain drivetrain =
-    //     TunerConstants.createDrivetrain();
+    public final CommandSwerveDrivetrain drivetrain =
+        TunerConstants.createDrivetrain();
 
-    // ---------------- Vision ----------------
+    //---------------- Vision ----------------
 
-    // private final VisionStandardDeviationModel visionStandardDeviationModel =
-    //     new VisionStandardDeviationModel(
-    //         VisionConstants.MAXIMUM_AMBIGUITY_FOR_SINGLE_TAG,
-    //         VisionConstants.MAXIMUM_Z_ERROR_METERS,
-    //         VisionConstants.MAXIMUM_OBSERVATION_AGE_SECONDS,
-    //         VisionConstants.MAXIMUM_DISTANCE_FOR_SINGLE_TAG_METERS,
-    //         VisionConstants.MAXIMUM_DISTANCE_FOR_MULTI_TAG_METERS,
-    //         VisionConstants.MAXIMUM_YAW_RATE_RADIANS_PER_SECOND,
-    //         VisionConstants.MAXIMUM_LINEAR_STANDARD_DEVIATION_METERS,
-    //         VisionConstants.MAXIMUM_ANGULAR_STANDARD_DEVIATION_RADIANS
-    //     );
+    private final VisionStandardDeviationModel visionStandardDeviationModel =
+        new VisionStandardDeviationModel(
+            VisionConstants.MAXIMUM_AMBIGUITY_FOR_SINGLE_TAG,
+            VisionConstants.MAXIMUM_Z_ERROR_METERS,
+            VisionConstants.MAXIMUM_OBSERVATION_AGE_SECONDS,
+            VisionConstants.MAXIMUM_DISTANCE_FOR_SINGLE_TAG_METERS,
+            VisionConstants.MAXIMUM_DISTANCE_FOR_MULTI_TAG_METERS,
+            VisionConstants.MAXIMUM_YAW_RATE_RADIANS_PER_SECOND,
+            VisionConstants.MAXIMUM_LINEAR_STANDARD_DEVIATION_METERS,
+            VisionConstants.MAXIMUM_ANGULAR_STANDARD_DEVIATION_RADIANS
+        );
 
-    // private final VisionHardwareFactoryImpl visionHardwareFactory =
-    //     new VisionHardwareFactoryImpl(false);
+    private final VisionHardwareFactoryImpl visionHardwareFactory =
+        new VisionHardwareFactoryImpl(false);
 
-    // private final VisionSubsystem visionSubsystem;
+    private final VisionSubsystem visionSubsystem;
 
     // // ---------------- Shooting ----------------
 
@@ -94,37 +112,37 @@ public class RobotContainer {
     public RobotContainer() {
         // hoodSubsystem = new HoodSubsystem();
 
-        // visionSubsystem =
-        //     createVisionSubsystem();
+        visionSubsystem =
+            createVisionSubsystem();
 
         configureBindings();
     }
 
-    // private VisionSubsystem createVisionSubsystem() {
-    //     // You need a real AprilTagFieldLayout reference here.
-    //     // I assume you already have it in VisionConstants.
-    //     AprilTagFieldLayout aprilTagFieldLayout = FieldCosntants.IS_ANDYMARK_FIELD ? AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark) : AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+    private VisionSubsystem createVisionSubsystem() {
+        // You need a real AprilTagFieldLayout reference here.
+        // I assume you already have it in VisionConstants.
+        AprilTagFieldLayout aprilTagFieldLayout = FieldCosntants.IS_ANDYMARK_FIELD ? AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark) : AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
 
-    //     VisionSubsystem.VisionPoseMeasurementConsumer visionPoseMeasurementConsumer =
-    //         (visionRobotPose, timestampSeconds, visionMeasurementStandardDeviations) ->
-    //             drivetrain.addVisionMeasurement(visionRobotPose, timestampSeconds, visionMeasurementStandardDeviations);
+        VisionSubsystem.VisionPoseMeasurementConsumer visionPoseMeasurementConsumer =
+            (visionRobotPose, timestampSeconds, visionMeasurementStandardDeviations) ->
+                drivetrain.addVisionMeasurement(visionRobotPose, timestampSeconds, visionMeasurementStandardDeviations);
 
-    //     return new VisionSubsystem(
-    //         aprilTagFieldLayout,
-    //         FieldCosntants.FIELD_LENGTH_METERS,
-    //         FieldCosntants.FIELD_WIDTH_METERS,
-    //         ()-> drivetrain.getPose(),
-    //         ()-> drivetrain.getYawRateRadiansPerSecond(),
-    //         visionPoseMeasurementConsumer,
-    //         visionStandardDeviationModel,
-    //         VisionConstants.cameraSpecificationsList,
-    //         visionHardwareFactory
-    //     );
-    // }
+        return new VisionSubsystem(
+            aprilTagFieldLayout,
+            FieldCosntants.FIELD_LENGTH_METERS,
+            FieldCosntants.FIELD_WIDTH_METERS,
+            ()-> drivetrain.getPose(),
+            ()-> drivetrain.getYawRateRadiansPerSecond(),
+            visionPoseMeasurementConsumer,
+            visionStandardDeviationModel,
+            VisionConstants.cameraSpecificationsList,
+            visionHardwareFactory
+        );
+    }
 
     private void configureBindings() {
         
-/* 
+
         drivetrain.setDefaultCommand(
             drivetrain.applyRequest(() ->
                 fieldCentricDriveRequest
@@ -139,25 +157,25 @@ public class RobotContainer {
             drivetrain.applyRequest(() -> idleRequest).ignoringDisable(true)
         );
 
-        addOnsController.a().whileTrue(drivetrain.applyRequest(() -> brakeRequest));
-        addOnsController.b().whileTrue(
+        driverController.a().whileTrue(drivetrain.applyRequest(() -> brakeRequest));
+        driverController.b().whileTrue(
             drivetrain.applyRequest(() ->
                 pointWheelsRequest.withModuleDirection(
-                    new Rotation2d(-addOnsController.getLeftY(), -addOnsController.getLeftX())
+                    new Rotation2d(-driverController.getLeftY(), -driverController.getLeftX())
                 )
             )
         );
 
-        addOnsController.back().and(addOnsController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-        addOnsController.back().and(addOnsController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-        addOnsController.start().and(addOnsController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
-        addOnsController.start().and(addOnsController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+        driverController.back().and(driverController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+        driverController.back().and(driverController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+        driverController.start().and(driverController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+        driverController.start().and(driverController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
         driverController.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
         driverController.y().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
-
+        
         drivetrain.registerTelemetry(telemetry::telemeterize);
-
+/*
         // ---------------- Intake bindings (example, simple) ----------------
         // Adjust buttons to your preference.
         driverController.x().whileTrue(new frc.robot.Intake.ActivateIntakeCmd(intakeSubsystem));
@@ -207,18 +225,17 @@ public class RobotContainer {
     }
 
     public Command getAutonomousCommand() {
-        // final var idleRequest = new SwerveRequest.Idle();
+        final var idleRequest = new SwerveRequest.Idle();
 
-        // return Commands.sequence(
-        //     drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero)),
-        //     drivetrain.applyRequest(() ->
-        //         fieldCentricDriveRequest
-        //             .withVelocityX(0.5)
-        //             .withVelocityY(0.0)
-        //             .withRotationalRate(0.0)
-        //     ).withTimeout(5.0),
-        //     drivetrain.applyRequest(() -> idleRequest)
-        // );
-        return null;
+        return Commands.sequence(
+            drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero)),
+            drivetrain.applyRequest(() ->
+                fieldCentricDriveRequest
+                    .withVelocityX(0.5)
+                    .withVelocityY(0.0)
+                    .withRotationalRate(0.0)
+            ).withTimeout(5.0),
+            drivetrain.applyRequest(() -> idleRequest)
+        );
     }
 }
