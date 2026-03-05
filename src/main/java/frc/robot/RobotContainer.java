@@ -91,15 +91,6 @@ public class RobotContainer {
     // private final ClimberSubsystem climberSubsystem =
     //     new ClimberSubsystem(leftClimberMotorController, rightClimberMotorController);
 
-    private final Command leftPivotIntakeTestCommand =
-    new SparkMaxMotorTestCmd("LeftPivotIntake", IntakeConstants.PIVOT_INTAKE_LEFT_MOTOR_ID, () -> addOnsController.getLeftY(), false, 0.4);
-
-    private final Command rightPivotIntakeTestCommand =
-        new SparkMaxMotorTestCmd("RightPivotIntake", IntakeConstants.PIVOT_INTAKE__RIGHT_MOTOR_ID, () -> addOnsController.getLeftY(), true, 0.4);
-
-    private final Command hoodAngleMotorTestCommand =
-        new TalonFxMotorTestCmd("HoodAngleMotor", HoodConstants.HOOD_ANGLE_TALON_ID, () -> addOnsController.getRightY(), false, 0.4);
-
     public RobotContainer() {
         // hoodSubsystem = new HoodSubsystem();
 
@@ -207,7 +198,7 @@ public class RobotContainer {
             new TalonFxMotorTestCmd(
                 "HoodAngleMotor",
                 HoodConstants.HOOD_ANGLE_TALON_ID,
-                () -> addOnsController.getRightY(),
+                () -> addOnsController.getLeftY(),
                 false,
                 0.4
             )
