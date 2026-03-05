@@ -182,7 +182,7 @@ public class HoodSubsystem extends SubsystemBase {
 
         boolean shouldUseLiveSolution =
             visionSubsystem.hasTarget()
-            && visionSubsystem.itsAValidShootingTarget()
+            && visionSubsystem.isShootingTargetValid()
             && shootingHelper.isPossibleToShoot();
 
         if (shouldUseLiveSolution) {
