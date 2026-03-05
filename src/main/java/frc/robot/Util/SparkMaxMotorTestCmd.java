@@ -92,6 +92,8 @@ public class SparkMaxMotorTestCmd extends Command {
             dashboardKeyPrefix + "MotorTemperatureCelsius",
             motorController.getMotorTemperature()
         );
+
+        SmartDashboard.putNumber(dashboardKeyPrefix + "RawAxis", motorSpeedSupplier.getAsDouble());
     }
 
     @Override

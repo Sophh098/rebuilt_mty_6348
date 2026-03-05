@@ -90,6 +90,8 @@ public class TalonFxMotorTestCmd extends Command {
             dashboardKeyPrefix + "DeviceTempCelsius",
             motorController.getDeviceTemp().getValueAsDouble()
         );
+
+        SmartDashboard.putNumber(dashboardKeyPrefix + "RawAxis", motorSpeedSupplier.getAsDouble());
     }
 
     @Override
