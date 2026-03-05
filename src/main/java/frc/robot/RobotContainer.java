@@ -1,58 +1,35 @@
 // File: src/main/java/frc/robot/RobotContainer.java
 package frc.robot;
 
-import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
-import com.ctre.phoenix6.swerve.SwerveRequest;
-import com.revrobotics.spark.SparkLowLevel;
-import com.revrobotics.spark.SparkMax;
-
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
-import edu.wpi.first.math.geometry.Rotation2d;
-import static edu.wpi.first.units.Units.MetersPerSecond;
-import static edu.wpi.first.units.Units.RadiansPerSecond;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.Climber.ClimberSubsystem;
-import frc.robot.Constants.FieldCosntants;
 import frc.robot.Constants.HoodConstants;
 import frc.robot.Constants.IntakeConstants;
-import frc.robot.Constants.VisionConstants;
-import frc.robot.Drive.CommandSwerveDrivetrain;
-import frc.robot.Drive.generated.TunerConstants;
-import frc.robot.Intake.IntakeSubsystem;
-import frc.robot.Shooting.HoodSubsystem;
-import frc.robot.Shooting.ShootingHelper;
 import frc.robot.Util.SparkMaxMotorTestCmd;
 import frc.robot.Util.TalonFxMotorTestCmd;
-import frc.robot.Vision.VisionHardwareFactoryImpl;
-import frc.robot.Vision.VisionStandardDeviationModel;
-import frc.robot.Vision.VisionSubsystem;
 
 public class RobotContainer {
 
-    private final double maximumSpeedMetersPerSecond =
-        1.0 * TunerConstants.SPEED_AT_12_VOLTS.in(MetersPerSecond);
+    // private final double maximumSpeedMetersPerSecond =
+    //     1.0 * TunerConstants.SPEED_AT_12_VOLTS.in(MetersPerSecond);
 
-    private final double maximumAngularRateRadiansPerSecond =
-        RotationsPerSecond.of(0.75).in(RadiansPerSecond);
+    // private final double maximumAngularRateRadiansPerSecond =
+    //     RotationsPerSecond.of(0.75).in(RadiansPerSecond);
 
-    private final SwerveRequest.FieldCentric fieldCentricDriveRequest =
-        new SwerveRequest.FieldCentric()
-            .withDeadband(maximumSpeedMetersPerSecond * 0.05)
-            .withRotationalDeadband(maximumAngularRateRadiansPerSecond * 0.05)
-            .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+    // private final SwerveRequest.FieldCentric fieldCentricDriveRequest =
+    //     new SwerveRequest.FieldCentric()
+    //         .withDeadband(maximumSpeedMetersPerSecond * 0.05)
+    //         .withRotationalDeadband(maximumAngularRateRadiansPerSecond * 0.05)
+    //         .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
-    private final SwerveRequest.SwerveDriveBrake brakeRequest =
-        new SwerveRequest.SwerveDriveBrake();
+    // private final SwerveRequest.SwerveDriveBrake brakeRequest =
+    //     new SwerveRequest.SwerveDriveBrake();
 
-    private final SwerveRequest.PointWheelsAt pointWheelsRequest =
-        new SwerveRequest.PointWheelsAt();
+    // private final SwerveRequest.PointWheelsAt pointWheelsRequest =
+    //     new SwerveRequest.PointWheelsAt();
 
-    private final Telemetry telemetry = new Telemetry(maximumSpeedMetersPerSecond);
+    // private final Telemetry telemetry = new Telemetry(maximumSpeedMetersPerSecond);
 
     private final CommandXboxController driverController =
         new CommandXboxController(0);
@@ -60,59 +37,59 @@ public class RobotContainer {
     private final CommandXboxController addOnsController =
         new CommandXboxController(1);
 
-    public final CommandSwerveDrivetrain drivetrain =
-        TunerConstants.createDrivetrain();
+    // public final CommandSwerveDrivetrain drivetrain =
+    //     TunerConstants.createDrivetrain();
 
     // ---------------- Vision ----------------
 
-    private final VisionStandardDeviationModel visionStandardDeviationModel =
-        new VisionStandardDeviationModel(
-            VisionConstants.MAXIMUM_AMBIGUITY_FOR_SINGLE_TAG,
-            VisionConstants.MAXIMUM_Z_ERROR_METERS,
-            VisionConstants.MAXIMUM_OBSERVATION_AGE_SECONDS,
-            VisionConstants.MAXIMUM_DISTANCE_FOR_SINGLE_TAG_METERS,
-            VisionConstants.MAXIMUM_DISTANCE_FOR_MULTI_TAG_METERS,
-            VisionConstants.MAXIMUM_YAW_RATE_RADIANS_PER_SECOND,
-            VisionConstants.MAXIMUM_LINEAR_STANDARD_DEVIATION_METERS,
-            VisionConstants.MAXIMUM_ANGULAR_STANDARD_DEVIATION_RADIANS
-        );
+    // private final VisionStandardDeviationModel visionStandardDeviationModel =
+    //     new VisionStandardDeviationModel(
+    //         VisionConstants.MAXIMUM_AMBIGUITY_FOR_SINGLE_TAG,
+    //         VisionConstants.MAXIMUM_Z_ERROR_METERS,
+    //         VisionConstants.MAXIMUM_OBSERVATION_AGE_SECONDS,
+    //         VisionConstants.MAXIMUM_DISTANCE_FOR_SINGLE_TAG_METERS,
+    //         VisionConstants.MAXIMUM_DISTANCE_FOR_MULTI_TAG_METERS,
+    //         VisionConstants.MAXIMUM_YAW_RATE_RADIANS_PER_SECOND,
+    //         VisionConstants.MAXIMUM_LINEAR_STANDARD_DEVIATION_METERS,
+    //         VisionConstants.MAXIMUM_ANGULAR_STANDARD_DEVIATION_RADIANS
+    //     );
 
-    private final VisionHardwareFactoryImpl visionHardwareFactory =
-        new VisionHardwareFactoryImpl(false);
+    // private final VisionHardwareFactoryImpl visionHardwareFactory =
+    //     new VisionHardwareFactoryImpl(false);
 
-    private final VisionSubsystem visionSubsystem;
+    // private final VisionSubsystem visionSubsystem;
 
-    // ---------------- Shooting ----------------
+    // // ---------------- Shooting ----------------
 
-    private final ShootingHelper shootingHelper =
-        new ShootingHelper(FieldCosntants.IS_ANDYMARK_FIELD);
+    // private final ShootingHelper shootingHelper =
+    //     new ShootingHelper(FieldCosntants.IS_ANDYMARK_FIELD);
 
-    private final HoodSubsystem hoodSubsystem;
+    // private final HoodSubsystem hoodSubsystem;
 
-    // ---------------- Intake ----------------
+    // // ---------------- Intake ----------------
 
-     private final SparkMax intakeRollerMotorController =
-        new SparkMax(IntakeConstants.ROLLER_MOTOR_ID, SparkLowLevel.MotorType.kBrushless);
+    //  private final SparkMax intakeRollerMotorController =
+    //     new SparkMax(IntakeConstants.ROLLER_MOTOR_ID, SparkLowLevel.MotorType.kBrushless);
 
-     private final SparkMax intakePivotMotorLeftController =
-        new SparkMax(IntakeConstants.PIVOT_INTAKE_LEFT_MOTOR, SparkLowLevel.MotorType.kBrushless);
+    //  private final SparkMax intakePivotMotorLeftController =
+    //     new SparkMax(IntakeConstants.PIVOT_INTAKE_LEFT_MOTOR, SparkLowLevel.MotorType.kBrushless);
 
-     private final SparkMax intakePivotMotorRightController =
-        new SparkMax(IntakeConstants.PIVOT_INTAKE_RIGHT_MOTOR, SparkLowLevel.MotorType.kBrushless);
+    //  private final SparkMax intakePivotMotorRightController =
+    //     new SparkMax(IntakeConstants.PIVOT_INTAKE_RIGHT_MOTOR, SparkLowLevel.MotorType.kBrushless);
 
-     private final IntakeSubsystem intakeSubsystem =
-        new IntakeSubsystem(intakeRollerMotorController, intakePivotMotorRightController, intakePivotMotorLeftController);
+    //  private final IntakeSubsystem intakeSubsystem =
+    //     new IntakeSubsystem(intakeRollerMotorController, intakePivotMotorRightController, intakePivotMotorLeftController);
 
-    // ---------------- Climber ----------------
+    // // ---------------- Climber ----------------
 
-    private final SparkMax leftClimberMotorController =
-        new SparkMax(frc.robot.Constants.ClimberConstants.LEFT_CLIMBER_MOTOR_ID, SparkLowLevel.MotorType.kBrushless);
+    // private final SparkMax leftClimberMotorController =
+    //     new SparkMax(frc.robot.Constants.ClimberConstants.LEFT_CLIMBER_MOTOR_ID, SparkLowLevel.MotorType.kBrushless);
 
-    private final SparkMax rightClimberMotorController =
-        new SparkMax(frc.robot.Constants.ClimberConstants.RIGHT_CLIMBER_MOTOR_ID, SparkLowLevel.MotorType.kBrushless);
+    // private final SparkMax rightClimberMotorController =
+    //     new SparkMax(frc.robot.Constants.ClimberConstants.RIGHT_CLIMBER_MOTOR_ID, SparkLowLevel.MotorType.kBrushless);
 
-    private final ClimberSubsystem climberSubsystem =
-        new ClimberSubsystem(leftClimberMotorController, rightClimberMotorController);
+    // private final ClimberSubsystem climberSubsystem =
+    //     new ClimberSubsystem(leftClimberMotorController, rightClimberMotorController);
 
     private final Command leftPivotIntakeTestCommand =
     new SparkMaxMotorTestCmd("LeftPivotIntake", IntakeConstants.PIVOT_INTAKE_LEFT_MOTOR_ID, () -> addOnsController.getLeftY(), false, 0.4);
@@ -124,35 +101,35 @@ public class RobotContainer {
         new TalonFxMotorTestCmd("HoodAngleMotor", HoodConstants.HOOD_ANGLE_TALON_ID, () -> addOnsController.getRightY(), false, 0.4);
 
     public RobotContainer() {
-        hoodSubsystem = new HoodSubsystem();
+        // hoodSubsystem = new HoodSubsystem();
 
-        visionSubsystem =
-            createVisionSubsystem();
+        // visionSubsystem =
+        //     createVisionSubsystem();
 
         configureBindings();
     }
 
-    private VisionSubsystem createVisionSubsystem() {
-        // You need a real AprilTagFieldLayout reference here.
-        // I assume you already have it in VisionConstants.
-        AprilTagFieldLayout aprilTagFieldLayout = FieldCosntants.IS_ANDYMARK_FIELD ? AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark) : AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+    // private VisionSubsystem createVisionSubsystem() {
+    //     // You need a real AprilTagFieldLayout reference here.
+    //     // I assume you already have it in VisionConstants.
+    //     AprilTagFieldLayout aprilTagFieldLayout = FieldCosntants.IS_ANDYMARK_FIELD ? AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark) : AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
 
-        VisionSubsystem.VisionPoseMeasurementConsumer visionPoseMeasurementConsumer =
-            (visionRobotPose, timestampSeconds, visionMeasurementStandardDeviations) ->
-                drivetrain.addVisionMeasurement(visionRobotPose, timestampSeconds, visionMeasurementStandardDeviations);
+    //     VisionSubsystem.VisionPoseMeasurementConsumer visionPoseMeasurementConsumer =
+    //         (visionRobotPose, timestampSeconds, visionMeasurementStandardDeviations) ->
+    //             drivetrain.addVisionMeasurement(visionRobotPose, timestampSeconds, visionMeasurementStandardDeviations);
 
-        return new VisionSubsystem(
-            aprilTagFieldLayout,
-            FieldCosntants.FIELD_LENGTH_METERS,
-            FieldCosntants.FIELD_WIDTH_METERS,
-            ()-> drivetrain.getPose(),
-            ()-> drivetrain.getYawRateRadiansPerSecond(),
-            visionPoseMeasurementConsumer,
-            visionStandardDeviationModel,
-            VisionConstants.cameraSpecificationsList,
-            visionHardwareFactory
-        );
-    }
+    //     return new VisionSubsystem(
+    //         aprilTagFieldLayout,
+    //         FieldCosntants.FIELD_LENGTH_METERS,
+    //         FieldCosntants.FIELD_WIDTH_METERS,
+    //         ()-> drivetrain.getPose(),
+    //         ()-> drivetrain.getYawRateRadiansPerSecond(),
+    //         visionPoseMeasurementConsumer,
+    //         visionStandardDeviationModel,
+    //         VisionConstants.cameraSpecificationsList,
+    //         visionHardwareFactory
+    //     );
+    // }
 
     private void configureBindings() {
         
@@ -214,17 +191,18 @@ public class RobotContainer {
     }
 
     public Command getAutonomousCommand() {
-        final var idleRequest = new SwerveRequest.Idle();
+        // final var idleRequest = new SwerveRequest.Idle();
 
-        return Commands.sequence(
-            drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero)),
-            drivetrain.applyRequest(() ->
-                fieldCentricDriveRequest
-                    .withVelocityX(0.5)
-                    .withVelocityY(0.0)
-                    .withRotationalRate(0.0)
-            ).withTimeout(5.0),
-            drivetrain.applyRequest(() -> idleRequest)
-        );
+        // return Commands.sequence(
+        //     drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero)),
+        //     drivetrain.applyRequest(() ->
+        //         fieldCentricDriveRequest
+        //             .withVelocityX(0.5)
+        //             .withVelocityY(0.0)
+        //             .withRotationalRate(0.0)
+        //     ).withTimeout(5.0),
+        //     drivetrain.applyRequest(() -> idleRequest)
+        // );
+        return null;
     }
 }
