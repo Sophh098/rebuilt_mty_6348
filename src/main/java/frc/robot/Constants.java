@@ -288,7 +288,7 @@ public class Constants {
                         new Translation3d(0.32, -0.32, 0.1778),
                         new Rotation3d(0, 0, 0)
                     ),
-                    VisionEnums.PoseEstimateNoiseLevel.MEDIUM,
+                    VisionEnums.PoseEstimateNoiseLevel.FR_CAM,
                     1.0
                 ),
                 new VisionEntries.CameraSpecifications(
@@ -297,7 +297,7 @@ public class Constants {
                         new Translation3d(0.32, 0.32, 0.1778),
                         new Rotation3d(0, 0, 0)
                     ),
-                    VisionEnums.PoseEstimateNoiseLevel.HIGH,
+                    VisionEnums.PoseEstimateNoiseLevel.FL_CAM,
                     0.8
                 ),
                 new VisionEntries.CameraSpecifications(
@@ -306,7 +306,7 @@ public class Constants {
                         new Translation3d(0.32, 0.32, 0.1778),
                         new Rotation3d(0, 0, Math.toRadians(90))
                     ),
-                    VisionEnums.PoseEstimateNoiseLevel.HIGH,
+                    VisionEnums.PoseEstimateNoiseLevel.L_CAM,
                     0.8
                 ),
                 new VisionEntries.CameraSpecifications(
@@ -315,7 +315,7 @@ public class Constants {
                         new Translation3d(0.32, -0.32, 0.1778),
                         new Rotation3d(0, 0, Math.toRadians(-90))
                     ),
-                    VisionEnums.PoseEstimateNoiseLevel.HIGH,
+                    VisionEnums.PoseEstimateNoiseLevel.R_CAM,
                     0.8
                 )
             );

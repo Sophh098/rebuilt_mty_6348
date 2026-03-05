@@ -26,7 +26,12 @@ public final class VisionEnums {
         LOW(0.025, 0.025, 0.025),
         MEDIUM(0.15, 0.15, 0.15),
         HIGH(0.30, 0.30, 0.30),
-        NONE(99.0, 99.0, 99.0);
+        NONE(99.0, 99.0, 99.0),
+
+        FR_CAM(0.3,0.3,0.3),
+        FL_CAM(0.3,0.3,0.3),
+        R_CAM(0.3,0.3,0.3),
+        L_CAM(0.3,0.3,0.3);
 
         private final Matrix<N3, N1> baseStandardDeviationMatrix;
 

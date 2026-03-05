@@ -175,6 +175,15 @@ public class RobotContainer {
         driverController.y().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
         
         drivetrain.registerTelemetry(telemetry::telemeterize);
+
+        driverController.x().whileTrue(
+            drivetrain.applyRequest(() ->
+                fieldCentricDriveRequest
+                    .withVelocityX(1.0)
+                    .withVelocityY(0.0)
+                    .withRotationalRate(0.0)
+            )
+        );
 /*
         // ---------------- Intake bindings (example, simple) ----------------
         // Adjust buttons to your preference.
