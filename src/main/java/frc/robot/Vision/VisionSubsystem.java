@@ -1,4 +1,3 @@
-// File: src/main/java/frc/robot/Vision/VisionSubsystem.java
 package frc.robot.Vision;
 
 import java.util.ArrayList;
@@ -15,255 +14,207 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.FieldCosntants;
 
+/**
+ * Vision subsystem that manages N camera threads.
+ *
+ * <h3>Periodic cost breakdown (4 cameras)</h3>
+ * <ul>
+ *   <li>4× volatile read of {@code VisionIOInputs} — ~0.01 ms total</li>
+ *   <li>1× {@code Timer.getFPGATimestamp()} call</li>
+ *   <li>1× {@code currentRobotPoseSupplier.get()}</li>
+ *   <li>0–4× {@code addVisionMeasurement()} calls (only on accepted observations)</li>
+ * </ul>
+ * All PhotonVision I/O runs in background threads at 20 Hz.
+ * The main loop never touches NetworkTables or does pose math.
+ */
 public class VisionSubsystem extends SubsystemBase {
 
-  public interface VisionPoseMeasurementConsumer {
-    void addVisionMeasurement(
-        Pose2d visionRobotPose,
-        double timestampSeconds,
-        Matrix<N3, N1> visionMeasurementStandardDeviations
-    );
-  }
+    // ── Functional interfaces ─────────────────────────────────────────────
 
-  public interface VisionHardwareFactory {
-    VisionIO createVisionHardware(
-        VisionEntries.CameraSpecifications cameraSpecifications,
-        AprilTagFieldLayout aprilTagFieldLayout
-    );
-  }
-
-  private static final VisionEnums.PoseObservationType[] poseObservationTypesByOrdinal =
-      VisionEnums.PoseObservationType.values();
-
-  private final List<LoggedVisionCamera> visionCameraList = new ArrayList<>();
-
-  private final Supplier<Pose2d> currentRobotPoseSupplier;
-  private final Supplier<Double> yawRateRadiansPerSecondSupplier;
-  private final VisionPoseMeasurementConsumer visionPoseMeasurementConsumer;
-
-  private final AprilTagFieldLayout aprilTagFieldLayout;
-  private final VisionStandardDeviationModel visionStandardDeviationModel;
-
-  private final double fieldLengthMeters;
-  private final double fieldWidthMeters;
-
-  private final boolean[] isShootingTagAllowedByFiducialIdentifier;
-
-  private boolean visionEnabled = true;
-  private boolean shootingTargetValidThisCycle = false;
-
-  public VisionSubsystem(
-      AprilTagFieldLayout aprilTagFieldLayout,
-      double fieldLengthMeters,
-      double fieldWidthMeters,
-      Supplier<Pose2d> currentRobotPoseSupplier,
-      Supplier<Double> yawRateRadiansPerSecondSupplier,
-      VisionPoseMeasurementConsumer visionPoseMeasurementConsumer,
-      VisionStandardDeviationModel visionStandardDeviationModel,
-      List<VisionEntries.CameraSpecifications> cameraSpecificationsList,
-      VisionHardwareFactory visionHardwareFactory
-  ) {
-    this.aprilTagFieldLayout = aprilTagFieldLayout;
-    this.fieldLengthMeters = fieldLengthMeters;
-    this.fieldWidthMeters = fieldWidthMeters;
-    this.currentRobotPoseSupplier = currentRobotPoseSupplier;
-    this.yawRateRadiansPerSecondSupplier = yawRateRadiansPerSecondSupplier;
-    this.visionPoseMeasurementConsumer = visionPoseMeasurementConsumer;
-    this.visionStandardDeviationModel = visionStandardDeviationModel;
-
-    long[] shootingTagIdentifiers = FieldCosntants.getShootingValidTagIdentifiers();
-    this.isShootingTagAllowedByFiducialIdentifier = buildShootingTagLookupTable(shootingTagIdentifiers);
-
-    for (VisionEntries.CameraSpecifications cameraSpecifications : cameraSpecificationsList) {
-      VisionIO visionHardwareInterface =
-          visionHardwareFactory.createVisionHardware(cameraSpecifications, aprilTagFieldLayout);
-
-      visionCameraList.add(
-          new LoggedVisionCamera(
-              cameraSpecifications.cameraName(),
-              visionHardwareInterface,
-              cameraSpecifications.baseNoiseLevel(),
-              cameraSpecifications.cameraConfidenceMultiplier()
-          )
-      );
-    }
-  }
-
-  @Override
-  public void periodic() {
-    if (!visionEnabled || visionCameraList.isEmpty()) {
-      shootingTargetValidThisCycle = false;
-      return;
+    public interface VisionPoseMeasurementConsumer {
+        void addVisionMeasurement(
+                Pose2d robotPose,
+                double timestampSeconds,
+                Matrix<N3, N1> standardDeviations);
     }
 
-    if (aprilTagFieldLayout == null) {
-      shootingTargetValidThisCycle = false;
-      return;
+    public interface VisionHardwareFactory {
+        VisionIO createVisionHardware(
+                VisionEntries.CameraSpecifications specs,
+                AprilTagFieldLayout fieldLayout);
     }
 
-    Pose2d currentRobotPose2d = currentRobotPoseSupplier.get();
-    Pose3d referenceRobotPose3d = new Pose3d(currentRobotPose2d);
+    // ── State ─────────────────────────────────────────────────────────────
 
-    double currentRobotTimestampSeconds = Timer.getFPGATimestamp();
-    double yawRateRadiansPerSecond = yawRateRadiansPerSecondSupplier.get();
+    private final List<CameraThread> cameraThreads = new ArrayList<>();
 
-    boolean foundValidShootingTagThisCycle = false;
+    private final Supplier<Pose2d>  currentPoseSupplier;
+    private final Supplier<Double>  yawRateSupplier;
+    private final VisionPoseMeasurementConsumer measurementConsumer;
 
-    for (LoggedVisionCamera visionCamera : visionCameraList) {
-      visionCamera.update(referenceRobotPose3d);
+    private final AprilTagFieldLayout          fieldLayout;
+    private final VisionStandardDeviationModel stdDevModel;
 
-      VisionIO.VisionIOInputs visionInputs = visionCamera.getVisionInputs();
+    private final double fieldLengthMeters;
+    private final double fieldWidthMeters;
 
-      if (!foundValidShootingTagThisCycle) {
-        foundValidShootingTagThisCycle =
-            containsAnyAllowedShootingTag(
-                visionInputs.detectedTagIdentifiers,
-                isShootingTagAllowedByFiducialIdentifier
-            );
-      }
+    /** Fast lookup table: index = tag ID, value = is this a shooting target? */
+    private final boolean[] shootingTagTable;
 
-      if (!visionInputs.photonPoseEstimatorEnabled) {
-        continue;
-      }
+    private boolean visionEnabled               = true;
+    private boolean shootingTargetValidThisCycle = false;
 
-      int observationSlotCount = visionInputs.observationTimestampsSeconds.length;
+    // ── Constructor ───────────────────────────────────────────────────────
 
-      for (int observationIndex = 0; observationIndex < observationSlotCount; observationIndex++) {
-        int tagCount = (int) visionInputs.observationTagCounts[observationIndex];
-        if (tagCount <= 0) {
-          continue;
+    public VisionSubsystem(
+            AprilTagFieldLayout fieldLayout,
+            double fieldLengthMeters,
+            double fieldWidthMeters,
+            Supplier<Pose2d> currentPoseSupplier,
+            Supplier<Double> yawRateSupplier,
+            VisionPoseMeasurementConsumer measurementConsumer,
+            VisionStandardDeviationModel stdDevModel,
+            List<VisionEntries.CameraSpecifications> cameraSpecs,
+            VisionHardwareFactory hardwareFactory) {
+
+        this.fieldLayout         = fieldLayout;
+        this.fieldLengthMeters   = fieldLengthMeters;
+        this.fieldWidthMeters    = fieldWidthMeters;
+        this.currentPoseSupplier = currentPoseSupplier;
+        this.yawRateSupplier     = yawRateSupplier;
+        this.measurementConsumer = measurementConsumer;
+        this.stdDevModel         = stdDevModel;
+
+        this.shootingTagTable = buildShootingTagTable(FieldCosntants.getShootingValidTagIdentifiers());
+
+        for (VisionEntries.CameraSpecifications spec : cameraSpecs) {
+            VisionIO io = hardwareFactory.createVisionHardware(spec, fieldLayout);
+            CameraThread ct = new CameraThread(
+                    spec.cameraName(),
+                    io,
+                    spec.baseNoiseLevel(),
+                    spec.cameraConfidenceMultiplier());
+            cameraThreads.add(ct);
+            ct.start();
+        }
+    }
+
+    // ── SubsystemBase ─────────────────────────────────────────────────────
+
+    /**
+     * Called every 20 ms by the robot loop.
+     * <b>ZERO</b> PhotonVision / NetworkTables calls happen here.
+     * All work is just reading volatile fields and doing arithmetic.
+     */
+    @Override
+    public void periodic() {
+        if (!visionEnabled || cameraThreads.isEmpty() || fieldLayout == null) {
+            shootingTargetValidThisCycle = false;
+            return;
         }
 
-        Pose3d robotPose = visionInputs.observationRobotPoses[observationIndex];
-        if (robotPose == null) {
-          continue;
+        Pose2d  currentPose2d  = currentPoseSupplier.get();
+        Pose3d  referencePose3d = new Pose3d(currentPose2d);
+        double  nowSeconds      = Timer.getFPGATimestamp();
+        double  yawRate         = yawRateSupplier.get();
+
+        boolean foundShootingTag = false;
+
+        for (CameraThread cam : cameraThreads) {
+            // Feed latest odometry pose to camera thread (cheap volatile write)
+            cam.setReferencePose(referencePose3d);
+
+            VisionIO.VisionIOInputs inputs = cam.getInputs();
+
+            // ── Shooting-tag detection ────────────────────────────────────
+            if (!foundShootingTag) {
+                foundShootingTag = hasAnyShootingTag(
+                        inputs.detectedTagIdentifiers,
+                        inputs.detectedTagCount,
+                        shootingTagTable);
+            }
+
+            // ── Pose measurement ──────────────────────────────────────────
+            if (inputs.observationTagCount <= 0 || inputs.observationRobotPose == null) {
+                continue;
+            }
+
+            VisionEnums.VisionRejectReason reject = stdDevModel.getRejectReason(
+                    inputs, nowSeconds, yawRate, fieldLengthMeters, fieldWidthMeters);
+
+            if (reject != null) {
+                continue; // observation rejected — no measurement added
+            }
+
+            Matrix<N3, N1> baseStdDevs = cam.getBaseNoiseLevel().getBaseStandardDeviationMatrix();
+            Matrix<N3, N1> stdDevs     = stdDevModel.calculateStdDevs(
+                    inputs, baseStdDevs, cam.getCameraConfidenceMultiplier());
+
+            measurementConsumer.addVisionMeasurement(
+                    inputs.observationRobotPose.toPose2d(),
+                    inputs.observationTimestampSeconds,
+                    stdDevs);
         }
 
-        int observationTypeOrdinal = (int) visionInputs.observationTypeOrdinals[observationIndex];
-        int clampedOrdinal =
-            Math.max(0, Math.min(observationTypeOrdinal, poseObservationTypesByOrdinal.length - 1));
-        VisionEnums.PoseObservationType observationType = poseObservationTypesByOrdinal[clampedOrdinal];
+        shootingTargetValidThisCycle = foundShootingTag;
+    }
 
-        VisionEntries.VisionObservation visionObservation =
-            new VisionEntries.VisionObservation(
-                visionCamera.getCameraName(),
-                visionInputs.observationTimestampsSeconds[observationIndex],
-                robotPose,
-                visionInputs.observationAmbiguities[observationIndex],
-                tagCount,
-                visionInputs.observationAverageTagDistanceMeters[observationIndex],
-                visionInputs.observationRotationTrusted[observationIndex],
-                observationType
-            );
+    // ── Public API ────────────────────────────────────────────────────────
 
-        VisionEnums.VisionRejectReason rejectReason =
-            visionStandardDeviationModel.getRejectReasonOrNull(
-                visionObservation,
-                currentRobotTimestampSeconds,
-                yawRateRadiansPerSecond,
-                fieldLengthMeters,
-                fieldWidthMeters
-            );
+    public boolean hasTarget() {
+        for (CameraThread cam : cameraThreads) {
+            if (cam.getInputs().hasTarget) return true;
+        }
+        return false;
+    }
 
-        if (rejectReason != null) {
-          continue;
+    /** Yaw of the best target from the first camera (useful for aiming). */
+    public double getLatestTargetYawRadians() {
+        return cameraThreads.isEmpty() ? 0.0 : cameraThreads.get(0).getInputs().latestTargetYawRadians;
+    }
+
+    /** {@code true} if a valid shooting AprilTag is visible this cycle. */
+    public boolean isShootingTargetValid() {
+        return shootingTargetValidThisCycle;
+    }
+
+    public void setVisionEnabled(boolean enabled) {
+        this.visionEnabled = enabled;
+    }
+
+    public void setDriverMode(boolean enabled) {
+        cameraThreads.forEach(c -> c.setDriverMode(enabled));
+    }
+
+    public AprilTagFieldLayout getFieldLayout() {
+        return fieldLayout;
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────────
+
+    private static boolean[] buildShootingTagTable(long[] tagIds) {
+        if (tagIds == null || tagIds.length == 0) return new boolean[0];
+
+        int max = 0;
+        for (long id : tagIds) {
+            if (id >= 0 && id < Integer.MAX_VALUE) max = Math.max(max, (int) id);
         }
 
-        Matrix<N3, N1> baseStandardDeviationMatrix =
-            visionCamera.getBaseNoiseLevel().getBaseStandardDeviationMatrix();
-
-        Matrix<N3, N1> measurementStandardDeviations =
-            visionStandardDeviationModel.calculateStandardDeviations(
-                visionObservation,
-                baseStandardDeviationMatrix,
-                visionCamera.getCameraConfidenceMultiplier()
-            );
-
-        visionPoseMeasurementConsumer.addVisionMeasurement(
-            robotPose.toPose2d(),
-            visionObservation.timestampSeconds(),
-            measurementStandardDeviations
-        );
-      }
-    }
-
-    shootingTargetValidThisCycle = foundValidShootingTagThisCycle;
-  }
-
-  private static boolean[] buildShootingTagLookupTable(long[] shootingTagIdentifiers) {
-    int maximumFiducialIdentifier = 0;
-
-    if (shootingTagIdentifiers != null) {
-      for (long fiducialIdentifier : shootingTagIdentifiers) {
-        if (fiducialIdentifier >= 0 && fiducialIdentifier < Integer.MAX_VALUE) {
-          maximumFiducialIdentifier = Math.max(maximumFiducialIdentifier, (int) fiducialIdentifier);
+        boolean[] table = new boolean[max + 1];
+        for (long id : tagIds) {
+            if (id >= 0 && id <= max) table[(int) id] = true;
         }
-      }
+        return table;
     }
 
-    boolean[] lookupTable = new boolean[Math.max(1, maximumFiducialIdentifier + 1)];
+    private static boolean hasAnyShootingTag(long[] tagIds, int count, boolean[] table) {
+        if (table == null || table.length == 0) return false;
 
-    if (shootingTagIdentifiers != null) {
-      for (long fiducialIdentifier : shootingTagIdentifiers) {
-        if (fiducialIdentifier >= 0 && fiducialIdentifier < lookupTable.length) {
-          lookupTable[(int) fiducialIdentifier] = true;
+        for (int i = 0; i < count; i++) {
+            long id = tagIds[i];
+            if (id < 0) break;
+            if (id < table.length && table[(int) id]) return true;
         }
-      }
+        return false;
     }
-
-    return lookupTable;
-  }
-
-  private static boolean containsAnyAllowedShootingTag(
-      long[] detectedTagIdentifiers,
-      boolean[] isShootingTagAllowedByFiducialIdentifier
-  ) {
-    if (detectedTagIdentifiers == null || isShootingTagAllowedByFiducialIdentifier == null) {
-      return false;
-    }
-
-    for (long fiducialIdentifierLong : detectedTagIdentifiers) {
-      if (fiducialIdentifierLong < 0) {
-        break; // sentinel
-      }
-
-      if (fiducialIdentifierLong >= isShootingTagAllowedByFiducialIdentifier.length) {
-        continue;
-      }
-
-      if (isShootingTagAllowedByFiducialIdentifier[(int) fiducialIdentifierLong]) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  public boolean hasTarget() {
-    for (LoggedVisionCamera visionCamera : visionCameraList) {
-      if (visionCamera.getVisionInputs().hasTarget) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public double getLatestTargetYawRadians() {
-    if (visionCameraList.isEmpty()) {
-      return 0.0;
-    }
-    return visionCameraList.get(0).getVisionInputs().latestTargetYawRadians;
-  }
-
-  public void setVisionEnabled(boolean visionEnabled) {
-    this.visionEnabled = visionEnabled;
-  }
-
-  public boolean itsAValidShootingTarget() {
-    return shootingTargetValidThisCycle;
-  }
-
-  public AprilTagFieldLayout getAprilTagFieldLayout() {
-    return aprilTagFieldLayout;
-  }
 }

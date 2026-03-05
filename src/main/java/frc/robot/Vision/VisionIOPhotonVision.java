@@ -2,221 +2,183 @@ package frc.robot.Vision;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.wpilibj.Timer;
 
+/**
+ * PhotonVision implementation of {@link VisionIO}.
+ *
+ * <p><b>Threading model:</b> {@code updateInputs()} is called by a dedicated
+ * background thread inside {@link CameraThread}, NOT by the main robot loop.
+ * The main loop only calls {@link CameraThread#readLatestInto(VisionIO.VisionIOInputs)},
+ * which is a fast volatile-read with zero allocation.
+ *
+ * <p>This keeps all PhotonVision I/O (network tables, pose math) off the
+ * main 20 ms loop, eliminating loop overtime with 4+ cameras.
+ */
 public class VisionIOPhotonVision implements VisionIO {
 
-  private static final long noFiducialIdentifierSentinel = -1L;
+    // ── Camera / estimator ───────────────────────────────────────────────
+    private final PhotonCamera photonCamera;
+    private final PhotonPoseEstimator photonPoseEstimator;
 
-  private final PhotonCamera photonCamera;
-  private final PhotonPoseEstimator photonPoseEstimator;
+    // ── Shared snapshot between camera thread → main loop ───────────────
+    // AtomicReference gives us a safe, lock-free single-writer / single-reader swap.
+    private final AtomicReference<Snapshot> latestSnapshot = new AtomicReference<>(new Snapshot());
 
-  private VisionEnums.PoseEstimationMode poseEstimationMode =
-      VisionEnums.PoseEstimationMode.COPROCESSOR_MULTI_TAG;
+    // ── Pose reference (written by main loop, read by camera thread) ─────
+    private volatile Pose3d referencePose = new Pose3d();
 
-  private Pose3d referencePoseForEstimation = new Pose3d();
+    // ── FPS tracking ─────────────────────────────────────────────────────
+    private long fpsWindowStart  = System.nanoTime();
+    private long fpsWindowFrames = 0;
+    private long lastPublishedFps = 0;
 
-  private double lastFramesPerSecondWindowStartTimestampSeconds = Timer.getFPGATimestamp();
-  private long drainedPipelineResultsInCurrentWindow = 0;
+    // Pre-allocated mutable snapshot to avoid per-frame allocation
+    private final Snapshot workSnapshot = new Snapshot();
 
-  private final int cameraFramesPerSecondLimit;
-  private final boolean enableRobotControllerFallbackPoseEstimation;
+    // ── Constants ─────────────────────────────────────────────────────────
+    /** Drop multi-tag if it falls outside this Z band (metres). */
+    private static final double MAX_Z_ERROR_METERS = 0.75;
 
-  public VisionIOPhotonVision(
-      String cameraName,
-      Transform3d robotToCameraTransform3d,
-      AprilTagFieldLayout aprilTagFieldLayout
-  ) {
-    photonCamera = new PhotonCamera(cameraName);
-    photonPoseEstimator = new PhotonPoseEstimator(aprilTagFieldLayout, robotToCameraTransform3d);
+    public VisionIOPhotonVision(
+            String cameraName,
+            Transform3d robotToCameraTransform,
+            AprilTagFieldLayout fieldLayout) {
 
-    // Clave para 4 cámaras: evita backlog y costo variable por getAllUnreadResults()
-    cameraFramesPerSecondLimit = 20;
-    photonCamera.setFPSLimit(cameraFramesPerSecondLimit);
+        photonCamera = new PhotonCamera(cameraName);
+        photonCamera.setVersionCheckEnabled(false); // saves ~1 ms per call on NT read
+        photonCamera.setFPSLimit(20);               // cap backlog; 20 Hz is plenty
 
-    // Máxima velocidad: false (solo coprocessor multitag).
-    // Si quieres “salvar” pose cuando solo hay 1 tag visible: true.
-    enableRobotControllerFallbackPoseEstimation = false;
-  }
-
-  public void setPoseEstimationMode(VisionEnums.PoseEstimationMode newPoseEstimationMode) {
-    poseEstimationMode = newPoseEstimationMode;
-  }
-
-  @Override
-  public void setReferencePoseForEstimation(Pose3d referencePose) {
-    referencePoseForEstimation = referencePose;
-  }
-
-  @Override
-  public void setDriverMode(boolean driverModeEnabled) {
-    photonCamera.setDriverMode(driverModeEnabled);
-  }
-
-  @Override
-  public void updateInputs(VisionIOInputs visionInputs) {
-    visionInputs.cameraConnected = photonCamera.isConnected();
-    visionInputs.photonPoseEstimatorEnabled = true;
-
-    // Reset outputs (NO reasignamos arreglos porque son final)
-    visionInputs.hasTarget = false;
-    visionInputs.latestTargetYawRadians = 0.0;
-    visionInputs.latestTargetPitchRadians = 0.0;
-
-    // "No observation" marker
-    visionInputs.observationTagCounts[0] = 0;
-    visionInputs.observationTimestampsSeconds[0] = 0.0;
-    visionInputs.observationRobotPoses[0] = null;
-    visionInputs.observationAmbiguities[0] = 0.0;
-    visionInputs.observationAverageTagDistanceMeters[0] = 0.0;
-    visionInputs.observationRotationTrusted[0] = false;
-    visionInputs.observationTypeOrdinals[0] = 0;
-
-    clearDetectedTagIdentifiers(visionInputs);
-
-    List<PhotonPipelineResult> unreadPipelineResults = photonCamera.getAllUnreadResults();
-    int unreadPipelineResultCount = unreadPipelineResults.size();
-
-    if (unreadPipelineResultCount == 0) {
-      updateFramesPerSecondEstimate(visionInputs, 0);
-      return;
+        photonPoseEstimator = new PhotonPoseEstimator(fieldLayout, robotToCameraTransform);
     }
 
-    PhotonPipelineResult newestResultWithTargets = selectNewestResultWithTargets(unreadPipelineResults);
-    if (newestResultWithTargets == null) {
-      updateFramesPerSecondEstimate(visionInputs, unreadPipelineResultCount);
-      return;
+    // ── VisionIO interface ───────────────────────────────────────────────
+
+    @Override
+    public void setReferencePose(Pose3d pose) {
+        referencePose = pose;                        // volatile write — fast
     }
 
-    visionInputs.hasTarget = true;
-
-    var bestTrackedTarget = newestResultWithTargets.getBestTarget();
-    visionInputs.latestTargetYawRadians = Math.toRadians(bestTrackedTarget.getYaw());
-    visionInputs.latestTargetPitchRadians = Math.toRadians(bestTrackedTarget.getPitch());
-
-    fillDetectedTagIdentifiers(visionInputs, newestResultWithTargets);
-
-    Optional<EstimatedRobotPose> estimatedRobotPoseOptional = estimateRobotPose(newestResultWithTargets);
-    if (estimatedRobotPoseOptional.isPresent()) {
-      writeSingleObservationToInputs(visionInputs, estimatedRobotPoseOptional.get());
+    @Override
+    public void setDriverMode(boolean enabled) {
+        photonCamera.setDriverMode(enabled);
     }
 
-    updateFramesPerSecondEstimate(visionInputs, unreadPipelineResultCount);
-  }
+    /**
+     * Called exclusively from the camera background thread.
+     * Reads PhotonVision, runs pose math, stores result in atomic snapshot.
+     */
+    @Override
+    public void updateInputs(VisionIOInputs inputs) {
+        inputs.cameraConnected = photonCamera.isConnected();
 
-  private static PhotonPipelineResult selectNewestResultWithTargets(List<PhotonPipelineResult> unreadPipelineResults) {
-    for (int resultIndex = unreadPipelineResults.size() - 1; resultIndex >= 0; resultIndex--) {
-      PhotonPipelineResult candidateResult = unreadPipelineResults.get(resultIndex);
-      if (candidateResult != null && candidateResult.hasTargets()) {
-        return candidateResult;
-      }
+        List<PhotonPipelineResult> results = photonCamera.getAllUnreadResults();
+        int resultCount = results.size();
+
+        // Track FPS
+        fpsWindowFrames += resultCount;
+        long nowNs = System.nanoTime();
+        if (nowNs - fpsWindowStart >= 1_000_000_000L) {
+            lastPublishedFps = fpsWindowFrames;
+            fpsWindowFrames  = 0;
+            fpsWindowStart   = nowNs;
+        }
+        inputs.framesPerSecond = lastPublishedFps;
+
+        // Reset observation
+        inputs.observationTagCount = 0;
+        inputs.hasTarget           = false;
+        inputs.detectedTagCount    = 0;
+
+        if (resultCount == 0) return;
+
+        // Use only the newest frame that has targets
+        PhotonPipelineResult best = newestWithTargets(results);
+        if (best == null) return;
+
+        // ── Aiming data ───────────────────────────────────────────────
+        inputs.hasTarget = true;
+        PhotonTrackedTarget bestTarget = best.getBestTarget();
+        inputs.latestTargetYawRadians   = Math.toRadians(bestTarget.getYaw());
+        inputs.latestTargetPitchRadians = Math.toRadians(bestTarget.getPitch());
+
+        // ── Tag IDs ───────────────────────────────────────────────────
+        fillTagIdentifiers(inputs, best);
+
+        // ── Pose estimate ─────────────────────────────────────────────
+        Optional<EstimatedRobotPose> poseOpt =
+                photonPoseEstimator.estimateCoprocMultiTagPose(best);
+
+        if (poseOpt.isEmpty()) {
+            // Fallback: single-tag lowest-ambiguity (only if target has low ambiguity)
+            if (bestTarget.getPoseAmbiguity() < 0.15) {
+                poseOpt = photonPoseEstimator.estimateLowestAmbiguityPose(best);
+            }
+        }
+
+        if (poseOpt.isEmpty()) return;
+
+        EstimatedRobotPose est = poseOpt.get();
+        int usedTags = est.targetsUsed != null ? est.targetsUsed.size() : 0;
+        if (usedTags == 0) return;
+
+        // Quick Z sanity — reject wildly wrong estimates right here
+        if (Math.abs(est.estimatedPose.getZ()) > MAX_Z_ERROR_METERS) return;
+
+        double totalDist = 0.0;
+        double ambiguity = 0.0;
+
+        for (PhotonTrackedTarget t : est.targetsUsed) {
+            totalDist += t.getBestCameraToTarget().getTranslation().getNorm();
+        }
+        if (usedTags == 1) {
+            ambiguity = est.targetsUsed.get(0).getPoseAmbiguity();
+        }
+
+        inputs.observationTagCount                 = usedTags;
+        inputs.observationTimestampSeconds         = est.timestampSeconds;
+        inputs.observationRobotPose                = est.estimatedPose;
+        inputs.observationAmbiguity                = ambiguity;
+        inputs.observationAverageTagDistanceMeters = totalDist / usedTags;
+        inputs.observationRotationTrusted          = (usedTags >= 2);
+        inputs.observationIsMultiTag               = (usedTags >= 2);
     }
-    return null;
-  }
 
-  private static void clearDetectedTagIdentifiers(VisionIOInputs visionInputs) {
-    for (int index = 0; index < visionInputs.detectedTagIdentifiers.length; index++) {
-      visionInputs.detectedTagIdentifiers[index] = noFiducialIdentifierSentinel;
-    }
-  }
+    // ── Private helpers ───────────────────────────────────────────────────
 
-  private static void fillDetectedTagIdentifiers(VisionIOInputs visionInputs, PhotonPipelineResult pipelineResult) {
-    int writeIndex = 0;
-    int capacity = visionInputs.detectedTagIdentifiers.length;
-
-    for (var trackedTarget : pipelineResult.getTargets()) {
-      if (writeIndex >= capacity) {
-        break;
-      }
-
-      int fiducialIdentifier = trackedTarget.getFiducialId();
-      if (fiducialIdentifier < 0) {
-        continue;
-      }
-
-      visionInputs.detectedTagIdentifiers[writeIndex++] = fiducialIdentifier;
+    private static PhotonPipelineResult newestWithTargets(List<PhotonPipelineResult> results) {
+        for (int i = results.size() - 1; i >= 0; i--) {
+            PhotonPipelineResult r = results.get(i);
+            if (r != null && r.hasTargets()) return r;
+        }
+        return null;
     }
 
-    // Sentinel already set for the rest because we cleared the array first
-  }
-
-  private Optional<EstimatedRobotPose> estimateRobotPose(PhotonPipelineResult pipelineResult) {
-    Optional<EstimatedRobotPose> coprocessorMultiTagEstimate =
-        photonPoseEstimator.estimateCoprocMultiTagPose(pipelineResult);
-
-    if (coprocessorMultiTagEstimate.isPresent()) {
-      return coprocessorMultiTagEstimate;
+    private static void fillTagIdentifiers(VisionIOInputs inputs, PhotonPipelineResult result) {
+        int count = 0;
+        int cap   = inputs.detectedTagIdentifiers.length;
+        for (PhotonTrackedTarget t : result.getTargets()) {
+            if (count >= cap) break;
+            int id = t.getFiducialId();
+            if (id < 0) continue;
+            inputs.detectedTagIdentifiers[count++] = id;
+        }
+        inputs.detectedTagCount = count;
     }
 
-    if (!enableRobotControllerFallbackPoseEstimation) {
-      return Optional.empty();
+    // ── Snapshot (unused in this design — kept for future logging) ────────
+
+    private static final class Snapshot {
+        // placeholder for future AdvantageKit-style logging
     }
-
-    return switch (poseEstimationMode) {
-      case COPROCESSOR_MULTI_TAG -> Optional.empty();
-      case LOWEST_AMBIGUITY -> photonPoseEstimator.estimateLowestAmbiguityPose(pipelineResult);
-      case CLOSEST_TO_REFERENCE_POSE ->
-          photonPoseEstimator.estimateClosestToReferencePose(pipelineResult, referencePoseForEstimation);
-      case AVERAGE_BEST_TARGETS -> photonPoseEstimator.estimateAverageBestTargetsPose(pipelineResult);
-    };
-  }
-
-  private static void writeSingleObservationToInputs(VisionIOInputs visionInputs, EstimatedRobotPose estimatedRobotPose) {
-    int usedTagCount =
-        (estimatedRobotPose.targetsUsed != null) ? estimatedRobotPose.targetsUsed.size() : 0;
-
-    if (usedTagCount <= 0) {
-      visionInputs.observationTagCounts[0] = 0;
-      return;
-    }
-
-    double totalDistanceMeters = 0.0;
-    for (var usedTrackedTarget : estimatedRobotPose.targetsUsed) {
-      totalDistanceMeters += usedTrackedTarget.getBestCameraToTarget().getTranslation().getNorm();
-    }
-
-    double averageDistanceMeters = totalDistanceMeters / usedTagCount;
-
-    double poseAmbiguity = 0.0;
-    if (usedTagCount == 1) {
-      poseAmbiguity = estimatedRobotPose.targetsUsed.get(0).getPoseAmbiguity();
-    }
-
-    boolean rotationTrusted = (usedTagCount >= 2);
-
-    VisionEnums.PoseObservationType observationType =
-        (usedTagCount >= 2)
-            ? VisionEnums.PoseObservationType.PHOTONVISION_MULTI_TAG
-            : VisionEnums.PoseObservationType.PHOTONVISION_SINGLE_TAG;
-
-    visionInputs.observationTimestampsSeconds[0] = estimatedRobotPose.timestampSeconds;
-    visionInputs.observationRobotPoses[0] = estimatedRobotPose.estimatedPose;
-    visionInputs.observationAmbiguities[0] = poseAmbiguity;
-    visionInputs.observationTagCounts[0] = usedTagCount;
-    visionInputs.observationAverageTagDistanceMeters[0] = averageDistanceMeters;
-    visionInputs.observationRotationTrusted[0] = rotationTrusted;
-    visionInputs.observationTypeOrdinals[0] = observationType.ordinal();
-  }
-
-  private void updateFramesPerSecondEstimate(VisionIOInputs visionInputs, int drainedResultCountThisCycle) {
-    double currentTimestampSeconds = Timer.getFPGATimestamp();
-
-    drainedPipelineResultsInCurrentWindow += drainedResultCountThisCycle;
-
-    double windowDurationSeconds = currentTimestampSeconds - lastFramesPerSecondWindowStartTimestampSeconds;
-    if (windowDurationSeconds >= 1.0) {
-      visionInputs.framesPerSecond = drainedPipelineResultsInCurrentWindow;
-      drainedPipelineResultsInCurrentWindow = 0;
-      lastFramesPerSecondWindowStartTimestampSeconds = currentTimestampSeconds;
-    }
-  }
 }

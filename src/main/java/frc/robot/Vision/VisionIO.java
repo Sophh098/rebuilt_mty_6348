@@ -2,40 +2,50 @@ package frc.robot.Vision;
 
 import edu.wpi.first.math.geometry.Pose3d;
 
+/**
+ * Hardware-abstraction layer for one camera.
+ * Kept intentionally minimal — all heavy work happens in the camera thread,
+ * not in the main robot loop.
+ */
 public interface VisionIO {
 
-  class VisionIOInputs {
-    public boolean cameraConnected = false;
+    /**
+     * Snapshot produced once per camera-thread iteration (~20 Hz).
+     * Written by the camera thread, read by the main loop.
+     * All primitives — zero heap allocation on reads.
+     */
+    class VisionIOInputs {
+        // ── Connection ──────────────────────────────────────────────
+        public volatile boolean cameraConnected = false;
 
-    /** Aiming helpers (radians). */
-    public double latestTargetYawRadians = 0.0;
-    public double latestTargetPitchRadians = 0.0;
+        // ── Latest aiming data (best target of newest frame) ────────
+        public volatile boolean  hasTarget               = false;
+        public volatile double   latestTargetYawRadians  = 0.0;
+        public volatile double   latestTargetPitchRadians = 0.0;
 
-    /** Pose estimator enabled inside the IO implementation. */
-    public boolean photonPoseEstimatorEnabled = false;
+        // ── Pose observation (at most 1 per camera per cycle) ───────
+        // tagCount == 0  →  no valid observation this cycle
+        public volatile int    observationTagCount                = 0;
+        public volatile double observationTimestampSeconds        = 0.0;
+        public volatile Pose3d observationRobotPose               = null;
+        public volatile double observationAmbiguity               = 0.0;
+        public volatile double observationAverageTagDistanceMeters = 0.0;
+        public volatile boolean observationRotationTrusted        = false;
+        public volatile boolean observationIsMultiTag             = false;
 
-    /** Observations (reused buffers). */
-    public int observationCount = 0;
-    public final double[] observationTimestampsSeconds = new double[1];
-    public final Pose3d[] observationRobotPoses = new Pose3d[1];
-    public final double[] observationAmbiguities = new double[1];
-    public final long[] observationTagCounts = new long[1];
-    public final double[] observationAverageTagDistanceMeters = new double[1];
-    public final boolean[] observationRotationTrusted = new boolean[1];
-    public final long[] observationTypeOrdinals = new long[1];
+        // ── Detected tag IDs (sentinel = -1, max 16 tags) ──────────
+        public final long[] detectedTagIdentifiers = new long[16];
+        public volatile int  detectedTagCount       = 0;
 
-    /** Detected tag identifiers for newest frame (reused buffer). */
-    public int detectedTagIdentifierCount = 0;
-    public final long[] detectedTagIdentifiers = new long[64];
+        // ── Diagnostics ─────────────────────────────────────────────
+        public volatile long framesPerSecond = 0;
+    }
 
-    public long framesPerSecond = 0;
-    public boolean hasTarget = false;
-  }
+    /** Called once per camera-thread tick to refresh inputs. */
+    default void updateInputs(VisionIOInputs inputs) {}
 
-  default void updateInputs(VisionIOInputs inputs) {}
+    default void setDriverMode(boolean enabled) {}
 
-  default void setDriverMode(boolean driverModeEnabled) {}
-
-  /** Output to IO: helps reference-based strategies (optional). */
-  default void setReferencePoseForEstimation(Pose3d referencePose) {}
+    /** Feed current robot pose so reference-based strategies can use it. */
+    default void setReferencePose(Pose3d referencePose) {}
 }

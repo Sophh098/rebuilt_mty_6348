@@ -28,7 +28,7 @@ public final class LoggedVisionCamera {
     }
 
     public void update(Pose3d referencePoseForEstimation) {
-        visionHardwareInterface.setReferencePoseForEstimation(referencePoseForEstimation);
+        visionHardwareInterface.setReferencePose(referencePoseForEstimation);
         visionHardwareInterface.updateInputs(visionInputs);
     }
 
