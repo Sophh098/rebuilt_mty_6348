@@ -2,7 +2,7 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.HoodConstants;
 import frc.robot.Constants.IntakeConstants;
@@ -184,9 +184,34 @@ public class RobotContainer {
         
         
 
-        CommandScheduler.getInstance().schedule(leftPivotIntakeTestCommand);
-        CommandScheduler.getInstance().schedule(rightPivotIntakeTestCommand);
-        CommandScheduler.getInstance().schedule(hoodAngleMotorTestCommand);
+        addOnsController.a().whileTrue(
+            Commands.parallel(
+                new SparkMaxMotorTestCmd(
+                    "LeftPivotIntake",
+                    IntakeConstants.PIVOT_INTAKE_LEFT_MOTOR_ID,
+                    () -> addOnsController.getLeftY(),
+                    false,
+                    0.4
+                ),
+                new SparkMaxMotorTestCmd(
+                    "RightPivotIntake",
+                    IntakeConstants.PIVOT_INTAKE__RIGHT_MOTOR_ID,
+                    () -> addOnsController.getLeftY(),
+                    true,
+                    0.4
+                )
+            )
+        );
+
+        addOnsController.y().whileTrue(
+            new TalonFxMotorTestCmd(
+                "HoodAngleMotor",
+                HoodConstants.HOOD_ANGLE_TALON_ID,
+                () -> addOnsController.getRightY(),
+                false,
+                0.4
+            )
+        );
         
     }
 
