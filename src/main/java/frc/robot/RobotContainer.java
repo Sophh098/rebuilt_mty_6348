@@ -13,6 +13,7 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Climber.ClimberSubsystem;
@@ -194,28 +195,36 @@ public class RobotContainer {
         // If you have a HoodCmd that uses vision + helper, bind it here.
         driverController.rightTrigger().whileTrue(new frc.robot.Shooting.HoodCmd(hoodSubsystem, visionSubsystem, shootingHelper));*/
 
-        new SparkMaxMotorTestCmd(
-            "LeftPivotIntake", 
-            IntakeConstants.PIVOT_INTAKE_LEFT_MOTOR_ID, 
-            () -> addOnsController.getLeftY(), 
-            false, 
-            0.4
-        ).execute();
-        new SparkMaxMotorTestCmd(
-            "RightPivotIntake", 
-            IntakeConstants.PIVOT_INTAKE__RIGHT_MOTOR_ID, 
-            () -> addOnsController.getLeftY(), 
-            true, 
-            0.4
-        ).execute();
-        new TalonFxMotorTestCmd(
-            "HoodAngleMotor", 
-            HoodConstants.HOOD_ANGLE_TALON_ID, 
-            () -> addOnsController.getRightY(), 
-            false, 
-            0.4
-        ).execute();
+        
+        
 
+        CommandScheduler.getInstance().schedule(
+            new SparkMaxMotorTestCmd(
+                "LeftPivotIntake", 
+                IntakeConstants.PIVOT_INTAKE_LEFT_MOTOR_ID, 
+                () -> addOnsController.getLeftY(), 
+                false, 
+                0.4
+            )
+        );
+        CommandScheduler.getInstance().schedule(
+            new SparkMaxMotorTestCmd(
+                "RightPivotIntake", 
+                IntakeConstants.PIVOT_INTAKE__RIGHT_MOTOR_ID, 
+                () -> addOnsController.getLeftY(), 
+                true, 
+                0.4
+            )
+        );
+        CommandScheduler.getInstance().schedule(
+            new TalonFxMotorTestCmd(
+                "HoodAngleMotor", 
+                HoodConstants.HOOD_ANGLE_TALON_ID, 
+                () -> addOnsController.getRightY(), 
+                false, 
+                0.4
+            )
+        );
         
     }
 
