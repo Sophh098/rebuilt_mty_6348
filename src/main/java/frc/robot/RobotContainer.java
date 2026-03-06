@@ -88,7 +88,7 @@ public class RobotContainer {
     private final ShootingHelper shootingHelper =
         new ShootingHelper(FieldCosntants.IS_ANDYMARK_FIELD);
 
-    // private final HoodSubsystem hoodSubsystem;
+    private final HoodSubsystem hoodSubsystem;
 
     // // ---------------- Intake ----------------
 
@@ -117,7 +117,7 @@ public class RobotContainer {
 
     public RobotContainer() {
 
-        // hoodSubsystem = new HoodSubsystem();
+        hoodSubsystem = new HoodSubsystem();
 
         visionSubsystem = createVisionSubsystem();
         configureBindings();
@@ -201,14 +201,13 @@ public class RobotContainer {
         
         // ---------------- Climber bindings (example) ----------------
         addOnsController.rightBumper().onTrue(new frc.robot.Climber.ExpandClimberCmd(climberSubsystem));
-        addOnsController.leftBumper().onTrue(new frc.robot.Climber.RetractClimberCmd(climberSubsystem));
+        addOnsController.leftBumper().onTrue(new frc.robot.Climber.RetractClimberCmd(climberSubsystem));*/
 
         // ---------------- Hood / shooting bindings (example) ----------------
         // If you have a HoodCmd that uses vision + helper, bind it here.
-        driverController.rightTrigger().whileTrue(new frc.robot.Shooting.HoodCmd(hoodSubsystem, visionSubsystem, shootingHelper));*/
+        driverController.rightTrigger().whileTrue(new frc.robot.Shooting.HoodCmd(hoodSubsystem, visionSubsystem, shootingHelper));
 
-        
-
+    
         
 
         driverController.x().whileTrue(
