@@ -326,7 +326,7 @@ public class Constants {
 
         public static final double MAXIMUM_DISTANCE_FOR_SINGLE_TAG_METERS = 6.0;
         public static final double MAXIMUM_DISTANCE_FOR_MULTI_TAG_METERS = 6.0;
-        public static final double MAXIMUM_YAW_RATE_RADIANS_PER_SECOND = 0.0;
+        public static final double MAXIMUM_YAW_RATE_RADIANS_PER_SECOND = 2.0;
 
         public static final double MAXIMUM_LINEAR_STANDARD_DEVIATION_METERS = 1.0;
         public static final double MAXIMUM_ANGULAR_STANDARD_DEVIATION_RADIANS = 1.5;
