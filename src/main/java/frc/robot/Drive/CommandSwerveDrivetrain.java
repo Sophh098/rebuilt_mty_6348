@@ -155,6 +155,8 @@ public class CommandSwerveDrivetrain extends TUNER_SWERVE_DRIVETRAIN implements 
             Pose2d visionRobotPoseMeters,
             double timestampSeconds,
             Matrix<N3, N1> visionMeasurementStdDevs) {
+        // ✅ CORRECTO: timestampSeconds ya es FPGA time desde PhotonVision.
+        //    NO llamar Utils.fpgaToCurrentTime() aquí — eso lo desplaza al futuro y CTRE lo ignora.
         super.addVisionMeasurement(visionRobotPoseMeters, timestampSeconds, visionMeasurementStdDevs);
     }
 
@@ -166,13 +168,32 @@ public class CommandSwerveDrivetrain extends TUNER_SWERVE_DRIVETRAIN implements 
 
     @Override
     public Optional<Pose2d> samplePoseAt(double timestampSeconds) {
+        // samplePoseAt SÍ necesita la conversión porque consulta el buffer interno de CTRE
+        // que vive en "current time", no en FPGA time.
         return super.samplePoseAt(Utils.fpgaToCurrentTime(timestampSeconds));
+    }
+
+    // ── Telemetry reference (set once after construction) ─────────────────
+
+    private frc.robot.Telemetry telemetryRef = null;
+
+    /**
+     * Wire up the Telemetry instance so periodic() can publish the vision-fused pose.
+     * Call this in RobotContainer after constructing both objects:
+     * <pre>
+     *   drivetrain.setTelemetry(telemetry);
+     *   drivetrain.registerTelemetry(telemetry::telemeterize);
+     * </pre>
+     */
+    public void setTelemetry(frc.robot.Telemetry telemetry) {
+        this.telemetryRef = telemetry;
     }
 
     // ── Periodic ──────────────────────────────────────────────────────────
 
     @Override
     public void periodic() {
+        // ── Alliance perspective ──────────────────────────────────────────
         if (!hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
             DriverStation.getAlliance().ifPresent(allianceColor -> {
                 setOperatorPerspectiveForward(
@@ -181,6 +202,14 @@ public class CommandSwerveDrivetrain extends TUNER_SWERVE_DRIVETRAIN implements 
                         : blueAllianceForwardRotation);
                 hasAppliedOperatorPerspective = true;
             });
+        }
+
+        // ── Publish vision-fused pose to Field2d ──────────────────────────
+        // getState().Pose here (called from the main robot loop) returns the
+        // pose estimator result AFTER addVisionMeasurement has been applied.
+        // This is what AdvantageScope should graph as the robot position.
+        if (telemetryRef != null) {
+            telemetryRef.publishVisionFusedPose(getState().Pose);
         }
     }
 

@@ -320,16 +320,16 @@ public class Constants {
                 )
             );
 
-        public static final double MAXIMUM_AMBIGUITY_FOR_SINGLE_TAG = 0.20;
-        public static final double MAXIMUM_Z_ERROR_METERS = 0.25;
-        public static final double MAXIMUM_OBSERVATION_AGE_SECONDS = 0.35;
+        public static final double MAXIMUM_AMBIGUITY_FOR_SINGLE_TAG = 0.40;
+        public static final double MAXIMUM_Z_ERROR_METERS = 0.40;
+        public static final double MAXIMUM_OBSERVATION_AGE_SECONDS = 0.15;
 
-        public static final double MAXIMUM_DISTANCE_FOR_SINGLE_TAG_METERS = 4.0;
+        public static final double MAXIMUM_DISTANCE_FOR_SINGLE_TAG_METERS = 6.0;
         public static final double MAXIMUM_DISTANCE_FOR_MULTI_TAG_METERS = 6.0;
-        public static final double MAXIMUM_YAW_RATE_RADIANS_PER_SECOND = 4.0;
+        public static final double MAXIMUM_YAW_RATE_RADIANS_PER_SECOND = 0.0;
 
-        public static final double MAXIMUM_LINEAR_STANDARD_DEVIATION_METERS = 2.0;
-        public static final double MAXIMUM_ANGULAR_STANDARD_DEVIATION_RADIANS = 3.0;
+        public static final double MAXIMUM_LINEAR_STANDARD_DEVIATION_METERS = 1.0;
+        public static final double MAXIMUM_ANGULAR_STANDARD_DEVIATION_RADIANS = 1.5;
     }
 
     public static final class FieldCosntants {
