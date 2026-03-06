@@ -297,3 +297,92 @@ public class HoodSubsystem extends SubsystemBase {
             && rightAbsoluteRotationsPerSecond <= HoodConstants.POST_SHOT_WHEEL_STOP_THRESHOLD_ROTATIONS_PER_SECOND;
     }
 }
+
+@Override
+public void periodic() {
+    readHardwareSensors();
+
+    if (DriverStation.isDisabled()) {
+        applyDisabledOutputs();
+        readyToShoot = false;
+        return;
+    }
+
+    updateOperationalStateTransitions();
+
+    // ✅ DEBUG: Log state and shooting request
+    SmartDashboard.putString("Hood/State", hoodOperationalState.toString());
+    SmartDashboard.putBoolean("Hood/ShootingRequestActive", shootingRequestActive);
+    SmartDashboard.putNumber("Hood/DesiredAngleDegrees", Math.toDegrees(desiredHoodAngleRadiansFromModel));
+    SmartDashboard.putNumber("Hood/GoalAngleRotations", goalHoodAnglePositionRotations);
+    SmartDashboard.putNumber("Hood/GoalWheelRPS", goalWheelRotationsPerSecond);
+
+    switch (hoodOperationalState) {
+        case AIMING_AND_SPINNING -> {
+            goalWheelRotationsPerSecond =
+                desiredExitSpeedMetersPerSecond * HoodConstants.CONVERSION_RATIO_FROM_METERS_TO_RPS;
+
+            double complementaryAngleRadians =
+                HoodConstants.COMPLEMENTARY_ANGLE - desiredHoodAngleRadiansFromModel;
+
+            double correctedAngleRadians =
+                complementaryAngleRadians - HoodConstants.HOOD_ANGLE_OFFSET_RADIANS;
+
+            goalHoodAnglePositionRotations =
+                correctedAngleRadians * HoodConstants.CONVERSION_RATIO_RAD_TO_ROT;
+
+            boolean rawReady =
+                isWheelVelocityReady(goalWheelRotationsPerSecond) &&
+                isHoodAngleReady(goalHoodAnglePositionRotations);
+
+            readyToShoot = readyDebouncerSeconds.calculate(rawReady);
+
+            indexerEnabled = shootingRequestActive && readyToShoot;
+        }
+
+        case POST_SHOT_COASTING -> {
+            indexerEnabled = false;
+            goalWheelRotationsPerSecond = 0.0;
+            goalHoodAnglePositionRotations = hoodHoldPositionRotations;
+
+            double currentTimestampSeconds = Timer.getFPGATimestamp();
+            double elapsedSeconds = currentTimestampSeconds - postShotCoastStartTimestampSeconds;
+
+            boolean hasMinimumTimeElapsed =
+                elapsedSeconds >= HoodConstants.POST_SHOT_COAST_MINIMUM_TIME_SECONDS;
+
+            boolean hasMaximumTimeElapsed =
+                elapsedSeconds >= HoodConstants.POST_SHOT_COAST_MAXIMUM_TIME_SECONDS;
+
+            boolean wheelsAreSlowEnough = areWheelsBelowStopThreshold();
+
+            if ((hasMinimumTimeElapsed && wheelsAreSlowEnough) || hasMaximumTimeElapsed) {
+                hoodOperationalState = HoodOperationalState.STOWING;
+            }
+
+            readyToShoot = false;
+        }
+
+        case STOWING -> {
+            indexerEnabled = false;
+            goalWheelRotationsPerSecond = 0.0;
+            goalHoodAnglePositionRotations = HoodConstants.HOOD_HOME_POSITION_ROTATIONS;
+
+            readyToShoot = false;
+
+            if (isHoodAngleReady(HoodConstants.HOOD_HOME_POSITION_ROTATIONS)) {
+                hoodOperationalState = HoodOperationalState.STOWED;
+            }
+        }
+
+        case STOWED -> {
+            indexerEnabled = false;
+            goalWheelRotationsPerSecond = 0.0;
+            goalHoodAnglePositionRotations = HoodConstants.HOOD_HOME_POSITION_ROTATIONS;
+
+            readyToShoot = false;
+        }
+    }
+
+    applyEnabledOutputs();
+}
