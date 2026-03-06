@@ -16,6 +16,7 @@ import frc.robot.Constants.HoodConstants;
 import frc.robot.Constants.ShootingConstants;
 import frc.robot.Drive.generated.TunerConstants;
 import frc.robot.Vision.VisionSubsystem;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class HoodSubsystem extends SubsystemBase {
 
@@ -166,6 +167,15 @@ public class HoodSubsystem extends SubsystemBase {
 
                 readyToShoot = false;
             }
+    SmartDashboard.putNumber("Hood/DesiredAngleRadians", desiredHoodAngleRadiansFromModel);
+    SmartDashboard.putNumber("Hood/DesiredAngleDegrees", Math.toDegrees(desiredHoodAngleRadiansFromModel));
+    SmartDashboard.putNumber("Hood/CurrentAngleRotations", hoodAnglePositionRotations);
+    SmartDashboard.putNumber("Hood/GoalAngleRotations", goalHoodAnglePositionRotations);
+    SmartDashboard.putNumber("Hood/LeftWheelRPS", leftWheelVelocityRotationsPerSecond);
+    SmartDashboard.putNumber("Hood/RightWheelRPS", rightWheelVelocityRotationsPerSecond);
+    SmartDashboard.putNumber("Hood/GoalWheelRPS", goalWheelRotationsPerSecond);
+    SmartDashboard.putBoolean("Hood/ReadyToShoot", readyToShoot);
+    SmartDashboard.putString("Hood/State", hoodOperationalState.toString());
         }
 
         applyEnabledOutputs();
