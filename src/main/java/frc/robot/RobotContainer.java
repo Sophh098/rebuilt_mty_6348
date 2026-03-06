@@ -51,11 +51,15 @@ public class RobotContainer {
 
     private final Telemetry telemetry = new Telemetry(maximumSpeedMetersPerSecond);
 
+    
+ // ------------ CONTROLES ---------------
     private final CommandXboxController driverController =
         new CommandXboxController(0);
 
     private final CommandXboxController addOnsController =
         new CommandXboxController(1);
+
+    
 
     public final CommandSwerveDrivetrain drivetrain =
         TunerConstants.createDrivetrain();
@@ -112,18 +116,17 @@ public class RobotContainer {
     //     new ClimberSubsystem(leftClimberMotorController, rightClimberMotorController);
 
     public RobotContainer() {
+
         // hoodSubsystem = new HoodSubsystem();
 
-        visionSubsystem =
-            createVisionSubsystem();
-
+        visionSubsystem = createVisionSubsystem();
         configureBindings();
     }
 
     private VisionSubsystem createVisionSubsystem() {
-        // You need a real AprilTagFieldLayout reference here.
-        // I assume you already have it in VisionConstants.
-        AprilTagFieldLayout aprilTagFieldLayout = FieldCosntants.IS_ANDYMARK_FIELD ? AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark) : AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+        AprilTagFieldLayout aprilTagFieldLayout = FieldCosntants.IS_ANDYMARK_FIELD 
+            ? AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark)
+            : AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
 
         VisionSubsystem.VisionPoseMeasurementConsumer visionPoseMeasurementConsumer =
             (visionRobotPose, timestampSeconds, visionMeasurementStandardDeviations) ->
@@ -133,8 +136,8 @@ public class RobotContainer {
             aprilTagFieldLayout,
             FieldCosntants.FIELD_LENGTH_METERS,
             FieldCosntants.FIELD_WIDTH_METERS,
-            ()-> drivetrain.getPose(),
-            ()-> drivetrain.getYawRateRadiansPerSecond(),
+            () -> drivetrain.getPose(),
+            () -> drivetrain.getYawRateRadiansPerSecond(),
             visionPoseMeasurementConsumer,
             visionStandardDeviationModel,
             VisionConstants.cameraSpecificationsList,
@@ -143,9 +146,8 @@ public class RobotContainer {
     }
 
     private void configureBindings() {
-        
 
-        // drivetrain.setDefaultCommand(
+         // drivetrain.setDefaultCommand(
         //     drivetrain.applyRequest(() ->
         //         fieldCentricDriveRequest
         //             .withVelocityX(-driverController.getLeftY() * maximumSpeedMetersPerSecond)
@@ -154,16 +156,17 @@ public class RobotContainer {
         //     )
         // );
 
+        
         drivetrain.setDefaultCommand(
             DriveCommands.joystickDriveWithVisionAim(
                 drivetrain,
                 fieldCentricDriveRequest,
                 visionSubsystem,
                 shootingHelper,
-                () -> driverController.rightBumper().getAsBoolean(),   // ejemplo: tu botón de auto-aim
-                () -> -driverController.getLeftY(),                    // forward/back
-                () -> -driverController.getLeftX(),                    // strafe
-                () -> -driverController.getRightX(),                   // rotación manual
+                () -> driverController.rightBumper().getAsBoolean(),
+                () -> -driverController.getLeftY(),
+                () -> -driverController.getLeftX(),
+                () -> -driverController.getRightX(),
                 maximumSpeedMetersPerSecond,
                 maximumAngularRateRadiansPerSecond
             )
@@ -175,12 +178,7 @@ public class RobotContainer {
         );
 
         driverController.a().whileTrue(drivetrain.applyRequest(() -> brakeRequest));
-        driverController.b().whileTrue(
-            drivetrain.applyRequest(() ->
-                pointWheelsRequest.withModuleDirection(
-                    new Rotation2d(-driverController.getLeftY(), -driverController.getLeftX())
-                )
-            )
+        driverController.b().whileTrue(drivetrain.applyRequest(() -> pointWheelsRequest.withModuleDirection( new Rotation2d(-driverController.getLeftY(), -driverController.getLeftX())))
         );
 
         driverController.back().and(driverController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
@@ -193,14 +191,7 @@ public class RobotContainer {
         
         drivetrain.registerTelemetry(telemetry::telemeterize);
 
-        driverController.x().whileTrue(
-            drivetrain.applyRequest(() ->
-                fieldCentricDriveRequest
-                    .withVelocityX(1.0)
-                    .withVelocityY(0.0)
-                    .withRotationalRate(0.0)
-            )
-        );
+
 /*
         // ---------------- Intake bindings (example, simple) ----------------
         // Adjust buttons to your preference.
@@ -217,37 +208,28 @@ public class RobotContainer {
         driverController.rightTrigger().whileTrue(new frc.robot.Shooting.HoodCmd(hoodSubsystem, visionSubsystem, shootingHelper));*/
 
         
+
         
+
+        driverController.x().whileTrue(
+            drivetrain.applyRequest(() -> fieldCentricDriveRequest .withVelocityX(1.0) .withVelocityY(0.0) .withRotationalRate(0.0)));
 
         addOnsController.a().whileTrue(
             Commands.parallel(
                 new SparkMaxMotorTestCmd(
                     "LeftPivotIntake",
                     IntakeConstants.PIVOT_INTAKE_LEFT_MOTOR_ID,
-                    () -> addOnsController.getLeftY(),
-                    false,
-                    0.4
-                ),
+                    () -> addOnsController.getLeftY(), false, 0.3),
                 new SparkMaxMotorTestCmd(
                     "RightPivotIntake",
                     IntakeConstants.PIVOT_INTAKE__RIGHT_MOTOR_ID,
-                    () -> addOnsController.getLeftY(),
-                    true,
-                    0.4
-                )
-            )
-        );
+                    () -> addOnsController.getLeftY(), true, 0.3)));
 
         addOnsController.y().whileTrue(
             new TalonFxMotorTestCmd(
                 "HoodAngleMotor",
                 HoodConstants.HOOD_ANGLE_TALON_ID,
-                () -> addOnsController.getLeftY(),
-                false,
-                0.4
-            )
-        );
-        
+                () -> addOnsController.getLeftY(), false, 0.2));
     }
 
     public Command getAutonomousCommand() {
@@ -255,12 +237,7 @@ public class RobotContainer {
 
         return Commands.sequence(
             drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero)),
-            drivetrain.applyRequest(() ->
-                fieldCentricDriveRequest
-                    .withVelocityX(0.5)
-                    .withVelocityY(0.0)
-                    .withRotationalRate(0.0)
-            ).withTimeout(5.0),
+            drivetrain.applyRequest(() -> fieldCentricDriveRequest .withVelocityX(0.5) .withVelocityY(0.0) .withRotationalRate(0.0) ).withTimeout(5.0),
             drivetrain.applyRequest(() -> idleRequest)
         );
     }
