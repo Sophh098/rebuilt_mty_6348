@@ -10,6 +10,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.FieldCosntants;
@@ -63,6 +64,9 @@ public class VisionSubsystem extends SubsystemBase {
 
     private boolean visionEnabled               = true;
     private boolean shootingTargetValidThisCycle = false;
+
+    // ── Debug logging ──────────────────────────────────────────────────────
+    private long lastDebugLogTime = 0;
 
     // ── Constructor ───────────────────────────────────────────────────────
 
@@ -119,6 +123,8 @@ public class VisionSubsystem extends SubsystemBase {
         double  yawRate         = yawRateSupplier.get();
 
         boolean foundShootingTag = false;
+        int measurementsAccepted = 0;
+        int measurementsRejected = 0;
 
         for (CameraThread cam : cameraThreads) {
             // Feed latest odometry pose to camera thread (cheap volatile write)
@@ -143,17 +149,47 @@ public class VisionSubsystem extends SubsystemBase {
                     inputs, nowSeconds, yawRate, fieldLengthMeters, fieldWidthMeters);
 
             if (reject != null) {
-                continue; // observation rejected — no measurement added
+                measurementsRejected++;
+                
+                // ✅ DEBUG: Log rejection reason every 1 second
+                if (nowSeconds - lastDebugLogTime > 1.0) {
+                    DriverStation.reportWarning(
+                        "[Vision/" + cam.getCameraName() + "] REJECTED: " + reject + 
+                        " | yawRate=" + String.format("%.3f", yawRate) +
+                        " | distance=" + String.format("%.2f", inputs.observationAverageTagDistanceMeters) + "m" +
+                        " | tagCount=" + inputs.observationTagCount,
+                        false);
+                }
+                continue;
             }
 
+            measurementsAccepted++;
             Matrix<N3, N1> baseStdDevs = cam.getBaseNoiseLevel().getBaseStandardDeviationMatrix();
             Matrix<N3, N1> stdDevs     = stdDevModel.calculateStdDevs(
                     inputs, baseStdDevs, cam.getCameraConfidenceMultiplier());
+
+            // ✅ DEBUG: Log accepted measurement
+            if (nowSeconds - lastDebugLogTime > 1.0) {
+                DriverStation.reportWarning(
+                    "[Vision/" + cam.getCameraName() + "] ACCEPTED: pose=" + inputs.observationRobotPose.toPose2d(),
+                    false);
+            }
 
             measurementConsumer.addVisionMeasurement(
                     inputs.observationRobotPose.toPose2d(),
                     inputs.observationTimestampSeconds,
                     stdDevs);
+        }
+
+        // ✅ DEBUG: Log summary every 1 second
+        if (nowSeconds - lastDebugLogTime > 1.0) {
+            DriverStation.reportWarning(
+                "[Vision Summary] Accepted=" + measurementsAccepted + 
+                " Rejected=" + measurementsRejected + 
+                " ShootingTarget=" + foundShootingTag +
+                " YawRate=" + String.format("%.3f", yawRate) + " rad/s",
+                false);
+            lastDebugLogTime = nowSeconds;
         }
 
         shootingTargetValidThisCycle = foundShootingTag;
