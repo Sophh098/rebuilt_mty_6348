@@ -66,7 +66,7 @@ public class VisionSubsystem extends SubsystemBase {
     private boolean shootingTargetValidThisCycle = false;
 
     // ── Debug logging ──────────────────────────────────────────────────────
-    private long lastDebugLogTime = 0;
+    private double lastDebugLogTime = 0.0;
 
     // ── Constructor ───────────────────────────────────────────────────────
 
