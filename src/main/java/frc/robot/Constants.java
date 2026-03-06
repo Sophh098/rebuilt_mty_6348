@@ -51,7 +51,7 @@ public class Constants {
         // -----------------------
 
         // Robot mass
-        public static final double ROBOT_MASS_KG = 60.0;
+        public static final double ROBOT_MASS_KG = 50.0;
 
         // Robot footprint: 27.5" x 27.5" (0.6985 m x 0.6985 m)
         // MOI_z ≈ (1/12) * m * (w^2 + l^2)
@@ -273,7 +273,7 @@ public class Constants {
             MAX_RPM * EXIT_SPEED_CONVERSION * 0.60;
 
         public static final double MINIMUM_HOOD_ANGLE_RADIANS = Math.toRadians(24);
-        public static final double MAXIMUM_HOOD_ANGLE_RADIANS = Math.toRadians(98);
+        public static final double MAXIMUM_HOOD_ANGLE_RADIANS = Math.toRadians(57);
 
         public static final double MINIMUM_HORIZONTAL_DISTANCE_METERS = 0.1;
     }
