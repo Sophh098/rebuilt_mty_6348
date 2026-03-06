@@ -283,7 +283,7 @@ public class Constants {
         public static final List<VisionEntries.CameraSpecifications> cameraSpecificationsList =
             List.of(
                 new VisionEntries.CameraSpecifications(
-                    "FRONTRIGHT_CAM",
+                    "RIGHT_FRONT_CAM",
                     new Transform3d(
                         new Translation3d(0.32, -0.32, 0.1778),
                         new Rotation3d(0, 0, 0)
@@ -291,24 +291,24 @@ public class Constants {
                     VisionEnums.PoseEstimateNoiseLevel.FR_CAM,
                     1.0
                 ),
-                new VisionEntries.CameraSpecifications(
-                    "FRONT_LEFT_CAM",
-                    new Transform3d(
-                        new Translation3d(0.32, 0.32, 0.1778),
-                        new Rotation3d(0, 0, 0)
-                    ),
-                    VisionEnums.PoseEstimateNoiseLevel.FL_CAM,
-                    0.8
-                ),
-                new VisionEntries.CameraSpecifications(
-                    "LEFT_CAM",
-                    new Transform3d(
-                        new Translation3d(0.32, 0.32, 0.1778),
-                        new Rotation3d(0, 0, Math.toRadians(90))
-                    ),
-                    VisionEnums.PoseEstimateNoiseLevel.L_CAM,
-                    0.8
-                ),
+                // new VisionEntries.CameraSpecifications(
+                //     "FRONT_LEFT_CAM",
+                //     new Transform3d(
+                //         new Translation3d(0.32, 0.32, 0.1778),
+                //         new Rotation3d(0, 0, 0)
+                //     ),
+                //     VisionEnums.PoseEstimateNoiseLevel.FL_CAM,
+                //     0.8
+                // ),
+                // new VisionEntries.CameraSpecifications(
+                //     "LEFT_CAM",
+                //     new Transform3d(
+                //         new Translation3d(0.32, 0.32, 0.1778),
+                //         new Rotation3d(0, 0, Math.toRadians(90))
+                //     ),
+                //     VisionEnums.PoseEstimateNoiseLevel.L_CAM,
+                //     0.8
+                // ),
                 new VisionEntries.CameraSpecifications(
                     "RIGHT_CAM",
                     new Transform3d(

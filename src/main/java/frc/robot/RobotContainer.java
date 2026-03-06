@@ -20,7 +20,9 @@ import frc.robot.Constants.HoodConstants;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.Drive.CommandSwerveDrivetrain;
+import frc.robot.Drive.DriveCommands;
 import frc.robot.Drive.generated.TunerConstants;
+import frc.robot.Shooting.ShootingHelper;
 import frc.robot.Util.SparkMaxMotorTestCmd;
 import frc.robot.Util.TalonFxMotorTestCmd;
 import frc.robot.Vision.VisionHardwareFactoryImpl;
@@ -77,10 +79,10 @@ public class RobotContainer {
 
     private final VisionSubsystem visionSubsystem;
 
-    // // ---------------- Shooting ----------------
+    // ---------------- Shooting ----------------
 
-    // private final ShootingHelper shootingHelper =
-    //     new ShootingHelper(FieldCosntants.IS_ANDYMARK_FIELD);
+    private final ShootingHelper shootingHelper =
+        new ShootingHelper(FieldCosntants.IS_ANDYMARK_FIELD);
 
     // private final HoodSubsystem hoodSubsystem;
 
@@ -143,12 +145,27 @@ public class RobotContainer {
     private void configureBindings() {
         
 
+        // drivetrain.setDefaultCommand(
+        //     drivetrain.applyRequest(() ->
+        //         fieldCentricDriveRequest
+        //             .withVelocityX(-driverController.getLeftY() * maximumSpeedMetersPerSecond)
+        //             .withVelocityY(-driverController.getLeftX() * maximumSpeedMetersPerSecond)
+        //             .withRotationalRate(-driverController.getRightX() * maximumAngularRateRadiansPerSecond)
+        //     )
+        // );
+
         drivetrain.setDefaultCommand(
-            drivetrain.applyRequest(() ->
-                fieldCentricDriveRequest
-                    .withVelocityX(-driverController.getLeftY() * maximumSpeedMetersPerSecond)
-                    .withVelocityY(-driverController.getLeftX() * maximumSpeedMetersPerSecond)
-                    .withRotationalRate(-driverController.getRightX() * maximumAngularRateRadiansPerSecond)
+            DriveCommands.joystickDriveWithVisionAim(
+                drivetrain,
+                fieldCentricDriveRequest,
+                visionSubsystem,
+                shootingHelper,
+                () -> driverController.rightBumper().getAsBoolean(),   // ejemplo: tu botón de auto-aim
+                () -> -driverController.getLeftY(),                    // forward/back
+                () -> -driverController.getLeftX(),                    // strafe
+                () -> -driverController.getRightX(),                   // rotación manual
+                maximumSpeedMetersPerSecond,
+                maximumAngularRateRadiansPerSecond
             )
         );
 
