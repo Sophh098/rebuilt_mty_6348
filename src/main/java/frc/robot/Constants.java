@@ -387,7 +387,7 @@ public class Constants {
          * Rotaciones totales del encoder para el rango completo del hood
          * Medido: de min a max = 126.003 rotaciones
          */
-        public static final double HOOD_ENCODER_ROTATIONS_FOR_FULL_RANGE = 126.003;
+        public static final double HOOD_ENCODER_ROTATIONS_FOR_FULL_RANGE = 126.223;
         
         /**
          * Conversión: radianes → rotaciones del encoder
@@ -501,7 +501,7 @@ public class Constants {
         public static final SoftwareLimitSwitchConfigs HOOD_SOFTWARE_LIMITS = 
             new SoftwareLimitSwitchConfigs()
                 .withForwardSoftLimitEnable(true)
-                .withForwardSoftLimitThreshold(132.3)   // 126.003 * 1.05
+                .withForwardSoftLimitThreshold(HOOD_ENCODER_ROTATIONS_FOR_FULL_RANGE * 1.05)   // 126.003 * 1.05
                 .withReverseSoftLimitEnable(true)
                 .withReverseSoftLimitThreshold(-5.0);   // Margen negativo
 
@@ -512,16 +512,16 @@ public class Constants {
         /**
          * PID para control de VELOCIDAD de ruedas
          * 
-         * VALORES CORREGIDOS:
-         * - kP = 0.5 (era 0.11, muy bajo)
+        * VALORES CORREGIDOS:
+        * - kP = 0.5 (era 0.11, muy bajo)
          * - kV = 0.12 (calibrar: kV = 12 / velocidad_máxima_RPS)
          */
         public static final Slot0Configs RIGHT_HOOD_PROPULSION_SLOT_CONFIGS = new Slot0Configs()
             .withKS(0.2)       // Static friction
             .withKG(0.0)       // Sin gravity (ruedas horizontales)
-            .withKV(0.12)      // Velocity feedforward
+            .withKV(0.002)      // Velocity feedforward
             .withKA(0.01)      // Acceleration feedforward
-            .withKP(0.5)       // ⚠️ Proporcional - CORREGIDO (era 0.11)
+            .withKP(1.2)       // ⚠️ Proporcional - CORREGIDO (era 0.11)
             .withKI(0.0)       // Integral
             .withKD(0.0);      // Derivative
 
@@ -566,9 +566,9 @@ public class Constants {
         
         /**
          * Velocidad del indexer (duty cycle 0-1)
-         * 0.6 = 60% de potencia
+         * 0.8 = 80% de potencia
          */
-        public static final double INDEXER_SPEED = 0.6;
+        public static final double INDEXER_SPEED = 0.8;
 
         // ========================================
         // TOLERANCIAS
