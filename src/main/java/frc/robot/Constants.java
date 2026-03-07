@@ -38,198 +38,155 @@ public class Constants {
 
     public static final double BATTERY_VOLTAGE = 12.0;
 
+    // ════════════════════════════════════════════════════════════
+    // DRIVE CONSTANTS
+    // ════════════════════════════════════════════════════════════
     public static final class DriveConstants {
-        public static final Mode SIM_MODE = Mode.SIM;
+        public static final Mode SIM_MODE    = Mode.SIM;
         public static final Mode CURRENT_MODE = RobotBase.isReal() ? Mode.REAL : SIM_MODE;
 
-        public static enum Mode {
-            /** Running on a real robot. */
-            REAL,
+        public static enum Mode { REAL, SIM, REPLAY }
 
-            /** Running a physics simulator. */
-            SIM,
+        public static final double  ROBOT_MASS_KG  = 50.0;
+        public static final double  ROBOT_MOI       = 4.8790225;
+        public static final double  WHEEL_COF       = 1.2;
 
-            /** Replaying from a log file. */
-            REPLAY
-        }
+        public static final double  STEER_GAINS_KP = 100;
+        public static final double  STEER_GAINS_KI = 0.0;
+        public static final double  STEER_GAINS_KD = 0.5;
+        public static final double  STEER_GAINS_KS = 0.1;
+        public static final double  STEER_GAINS_KV = 1.91;
+        public static final double  STEER_GAINS_KA = 0.0;
 
-        // -----------------------
-        // Updated with your values
-        // -----------------------
+        public static final double  DRIVE_GAINS_KP = 0.1;
+        public static final double  DRIVE_GAINS_KI = 0.0;
+        public static final double  DRIVE_GAINS_KD = 0.0;
+        public static final double  DRIVE_GAINS_KS = 0.0;
+        public static final double  DRIVE_GAINS_KV = 0.124;
+        public static final double  DRIVE_GAINS_KA = 0.0;
 
-        // Robot mass
-        public static final double ROBOT_MASS_KG = 50.0;
-
-        // Robot footprint: 27.5" x 27.5" (0.6985 m x 0.6985 m)
-        // MOI_z ≈ (1/12) * m * (w^2 + l^2)
-        // With m=60 kg, w=l=0.6985 m => MOI_z = 4.8790225 kg*m^2
-        public static final double ROBOT_MOI = 4.8790225;
-
-        // Coefficient of friction (given)
-        public static final double WHEEL_COF = 1.2;
-
-        public static final double STEER_GAINS_KP = 100;
-        public static final double STEER_GAINS_KI = 0.0;
-        public static final double STEER_GAINS_KD = 0.5;
-        public static final double STEER_GAINS_KS = 0.1;
-        public static final double STEER_GAINS_KV = 1.91;
-        public static final double STEER_GAINS_KA = 0.0;
-
-        public static final double DRIVE_GAINS_KP = 0.1;
-        public static final double DRIVE_GAINS_KI = 0.0;
-        public static final double DRIVE_GAINS_KD = 0.0;
-        public static final double DRIVE_GAINS_KS = 0.0;
-        public static final double DRIVE_GAINS_KV = 0.124;
-        public static final double DRIVE_GAINS_KA = 0.0;
-
-        public static final Current kSlipCurrent = Amps.of(60.0);
+        public static final Current kSlipCurrent              = Amps.of(60.0);
         public static final Current SteeringStatorCurrentLimit = Amps.of(60.0);
 
-        public static final String CAN_BUS = "6348 Horus CANivore";
+        public static final String CAN_BUS        = "6348 Horus CANivore";
         public static final String HOOT_FILE_PATH = "./logs/example.hoot";
 
         public static final LinearVelocity kSpeedAt12Volts = MetersPerSecond.of(3.79);
 
-        public static final double K_COUPLE_RATIO = 3.5714285714285716;
-        public static final double K_DRIVE_GEAR_RATIO = 8.142857142857142;
-        public static final double K_STEER_GEAR_RATIO = 21.428571428571427;
-        public static final Distance kWheelRadius = Inches.of(2.0);
+        public static final double   K_COUPLE_RATIO      = 3.5714285714285716;
+        public static final double   K_DRIVE_GEAR_RATIO  = 8.142857142857142;
+        public static final double   K_STEER_GEAR_RATIO  = 21.428571428571427;
+        public static final Distance kWheelRadius        = Inches.of(2.0);
 
-        public static final boolean K_INVERT_LEFT_SIDE = false;
-        public static final boolean K_INVERT_RIGHT_SIDE = true;
-        
-        public static final int K_PIGEON_ID = 13;
+        public static final boolean K_INVERT_LEFT_SIDE   = false;
+        public static final boolean K_INVERT_RIGHT_SIDE  = true;
+        public static final int     K_PIGEON_ID          = 13;
 
-        // -----------------------
-        // Simulation-only values
-        // -----------------------
-
-        // kDriveInertia: wheel spin inertia about axle (NOT steer).
-        // Each wheel mass is 0.73 lb = 0.33112243 kg
-        // Wheel radius is 2.167 in = 0.0550418 m
-        // Solid disk approximation: I = 0.5 * m * r^2 = 0.000501584 kg*m^2
-        public static final MomentOfInertia kDriveInertia = KilogramSquareMeters.of(0.01);
-
-        // kSteerInertia: azimuth rotational inertia of the entire steering mechanism.
-        // If this is too tiny, MapleSim can get numerically unstable. Use a conservative value.
-        public static final MomentOfInertia kSteerInertia = KilogramSquareMeters.of(0.01);
-
-        // Simulated voltage necessary to overcome friction
-        public static final Voltage kSteerFrictionVoltage = Volts.of(0.2);
-        public static final Voltage kDriveFrictionVoltage = Volts.of(0.2);
+        public static final MomentOfInertia kDriveInertia        = KilogramSquareMeters.of(0.01);
+        public static final MomentOfInertia kSteerInertia        = KilogramSquareMeters.of(0.01);
+        public static final Voltage         kSteerFrictionVoltage = Volts.of(0.2);
+        public static final Voltage         kDriveFrictionVoltage = Volts.of(0.2);
 
         public static final Distance kTrackWidth = Inches.of(23.5);
-        public static final Distance kWheelBase = Inches.of(23.5);
-        // Front Left
-        public static final int K_FRONT_LEFT_DRIVE_MOTOR_ID = 10;
-        public static final int K_FRONT_LEFT_STEER_MOTOR_ID = 6;
-        public static final int K_FRONT_LEFT_ENCODER_ID = 2;
-        public static final Angle kFrontLeftEncoderOffset = Rotations.of(0.27197265625);
-        public static final boolean K_FRONT_LEFT_STEER_MOTOR_INVERTED = true;
-        public static final boolean K_FRONT_LEFT_ENCODER_INVERTED = false;
+        public static final Distance kWheelBase  = Inches.of(23.5);
 
+        public static final int     K_FRONT_LEFT_DRIVE_MOTOR_ID      = 10;
+        public static final int     K_FRONT_LEFT_STEER_MOTOR_ID      = 6;
+        public static final int     K_FRONT_LEFT_ENCODER_ID          = 2;
+        public static final Angle   kFrontLeftEncoderOffset          = Rotations.of(0.27197265625);
+        public static final boolean K_FRONT_LEFT_STEER_MOTOR_INVERTED = true;
+        public static final boolean K_FRONT_LEFT_ENCODER_INVERTED    = false;
         public static final Distance kFrontLeftXPos = kWheelBase.div(2);
         public static final Distance kFrontLeftYPos = kTrackWidth.div(2);
 
-
-        // Front Right
-        public static final int K_FRONT_RIGHT_DRIVE_MOTOR_ID = 9;
-        public static final int K_FRONT_RIGHT_STEER_MOTOR_ID = 5;
-        public static final int K_FRONT_RIGHT_ENCODER_ID = 1;
-        public static final Angle kFrontRightEncoderOffset = Rotations.of(-0.30810546875);
+        public static final int     K_FRONT_RIGHT_DRIVE_MOTOR_ID      = 9;
+        public static final int     K_FRONT_RIGHT_STEER_MOTOR_ID      = 5;
+        public static final int     K_FRONT_RIGHT_ENCODER_ID          = 1;
+        public static final Angle   kFrontRightEncoderOffset          = Rotations.of(-0.30810546875);
         public static final boolean K_FRONT_RIGHT_STEER_MOTOR_INVERTED = true;
-        public static final boolean K_FRONT_RIGHT_ENCODER_INVERTED = false;
-
-       public static final Distance kFrontRightXPos = kWheelBase.div(2);
+        public static final boolean K_FRONT_RIGHT_ENCODER_INVERTED    = false;
+        public static final Distance kFrontRightXPos = kWheelBase.div(2);
         public static final Distance kFrontRightYPos = kTrackWidth.div(-2);
-        //hay que modificcar algo extra ahorita para probar sin cámaras?
 
-        // Back Left
-        public static final int K_BACK_LEFT_DRIVE_MOTOR_ID = 11;
-        public static final int K_BACK_LEFT_STEER_MOTOR_ID = 7;
-        public static final int K_BACK_LEFT_ENCODER_ID = 3;
-        public static final Angle kBackLeftEncoderOffset = Rotations.of(-0.41455078125);
+        public static final int     K_BACK_LEFT_DRIVE_MOTOR_ID      = 11;
+        public static final int     K_BACK_LEFT_STEER_MOTOR_ID      = 7;
+        public static final int     K_BACK_LEFT_ENCODER_ID          = 3;
+        public static final Angle   kBackLeftEncoderOffset          = Rotations.of(-0.41455078125);
         public static final boolean K_BACK_LEFT_STEER_MOTOR_INVERTED = true;
-        public static final boolean K_BACK_LEFT_ENCODER_INVERTED = false;
-
+        public static final boolean K_BACK_LEFT_ENCODER_INVERTED    = false;
         public static final Distance kBackLeftXPos = kWheelBase.div(-2);
         public static final Distance kBackLeftYPos = kTrackWidth.div(2);
 
-        // Back Right
-        public static final int K_BACK_RIGHT_DRIVE_MOTOR_ID = 12;
-        public static final int K_BACK_RIGHT_STEER_MOTOR_ID = 8;
-        public static final int K_BACK_RIGHT_ENCODER_ID = 4;
-        public static final Angle kBackRightEncoderOffset = Rotations.of(-0.14013671875);
+        public static final int     K_BACK_RIGHT_DRIVE_MOTOR_ID      = 12;
+        public static final int     K_BACK_RIGHT_STEER_MOTOR_ID      = 8;
+        public static final int     K_BACK_RIGHT_ENCODER_ID          = 4;
+        public static final Angle   kBackRightEncoderOffset          = Rotations.of(-0.14013671875);
         public static final boolean K_BACK_RIGHT_STEER_MOTOR_INVERTED = true;
-        public static final boolean K_BACK_RIGHT_ENCODER_INVERTED = false;
-
+        public static final boolean K_BACK_RIGHT_ENCODER_INVERTED    = false;
         public static final Distance kBackRightXPos = kWheelBase.div(-2);
         public static final Distance kBackRightYPos = kTrackWidth.div(-2);
 
-        public static final double DEADBAND = 0.1;
-        public static final double ANGLE_KP = 5.0;
-        public static final double ANGLE_KD = 0.4;
-        public static final double ANGLE_MAX_VELOCITY = 8.0;
+        public static final double DEADBAND               = 0.1;
+        public static final double ANGLE_KP               = 5.0;
+        public static final double ANGLE_KD               = 0.4;
+        public static final double ANGLE_MAX_VELOCITY     = 8.0;
         public static final double ANGLE_MAX_ACCELERATION = 20.0;
-        public static final double FF_START_DELAY = 2.0; // Secs
-        public static final double FF_RAMP_RATE = 0.1; // Volts/Sec
-        public static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
-        public static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
+        public static final double FF_START_DELAY         = 2.0;
+        public static final double FF_RAMP_RATE           = 0.1;
+        public static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25;
+        public static final double WHEEL_RADIUS_RAMP_RATE    = 0.05;
     }
 
+    // ════════════════════════════════════════════════════════════
+    // AUTO CONSTANTS
+    // ════════════════════════════════════════════════════════════
     public static final class AutoConstants {
         public static final double TRANSLATION_KP = 5.0;
         public static final double TRANSLATION_KI = 0.0;
         public static final double TRANSLATION_KD = 0.0;
-
-        public static final double ROTATION_KP = 5.0;
-        public static final double ROTATION_KI = 0.0;
-        public static final double ROTATION_KD = 0.0;
+        public static final double ROTATION_KP    = 5.0;
+        public static final double ROTATION_KI    = 0.0;
+        public static final double ROTATION_KD    = 0.0;
     }
 
+    // ════════════════════════════════════════════════════════════
+    // SHOOTING CONSTANTS
+    // ════════════════════════════════════════════════════════════
     public static final class ShootingConstants {
 
-        public static final double PASSING_SHOOT_RIGHT_RED_ALLIANCE_WELDED_X_METERS = 14.228191;
-        public static final double PASSING_SHOOT_RIGHT_RED_ALLIANCE_WELDED_Y_METERS = 1.344887667;
-
+        // Posiciones del funnel y pases (sin cambios)
+        public static final double PASSING_SHOOT_RIGHT_RED_ALLIANCE_WELDED_X_METERS  = 14.228191;
+        public static final double PASSING_SHOOT_RIGHT_RED_ALLIANCE_WELDED_Y_METERS  = 1.344887667;
         public static final double PASSING_SHOOT_RIGHT_BLUE_ALLIANCE_WELDED_X_METERS = 2.312797;
         public static final double PASSING_SHOOT_RIGHT_BLUE_ALLIANCE_WELDED_Y_METERS = 1.344887667;
-
-        public static final double PASSING_SHOOT_RIGHT_RED_ALLIANCE_ANDYMARK_X_METERS = 14.207236;
-        public static final double PASSING_SHOOT_RIGHT_RED_ALLIANCE_ANDYMARK_Y_METERS = 1.340442667;
-
+        public static final double PASSING_SHOOT_RIGHT_RED_ALLIANCE_ANDYMARK_X_METERS  = 14.207236;
+        public static final double PASSING_SHOOT_RIGHT_RED_ALLIANCE_ANDYMARK_Y_METERS  = 1.340442667;
         public static final double PASSING_SHOOT_RIGHT_BLUE_ALLIANCE_ANDYMARK_X_METERS = 2.305812;
         public static final double PASSING_SHOOT_RIGHT_BLUE_ALLIANCE_ANDYMARK_Y_METERS = 1.340442667;
 
-        public static final double PASSING_SHOOT_LEFT_RED_ALLIANCE_WELDED_X_METERS = 14.228191;
-        public static final double PASSING_SHOOT_LEFT_RED_ALLIANCE_WELDED_Y_METERS = 6.724438333;
+        public static final double PASSING_SHOOT_LEFT_RED_ALLIANCE_WELDED_X_METERS   = 14.228191;
+        public static final double PASSING_SHOOT_LEFT_RED_ALLIANCE_WELDED_Y_METERS   = 6.724438333;
+        public static final double PASSING_SHOOT_LEFT_BLUE_ALLIANCE_WELDED_X_METERS  = 2.312797;
+        public static final double PASSING_SHOOT_LEFT_BLUE_ALLIANCE_WELDED_Y_METERS  = 6.724438333;
+        public static final double PASSING_SHOOT_LEFT_RED_ALLIANCE_ANDYMARK_X_METERS   = 14.207236;
+        public static final double PASSING_SHOOT_LEFT_RED_ALLIANCE_ANDYMARK_Y_METERS   = 6.702213333;
+        public static final double PASSING_SHOOT_LEFT_BLUE_ALLIANCE_ANDYMARK_X_METERS  = 2.305812;
+        public static final double PASSING_SHOOT_LEFT_BLUE_ALLIANCE_ANDYMARK_Y_METERS  = 6.702213333;
 
-        public static final double PASSING_SHOOT_LEFT_BLUE_ALLIANCE_WELDED_X_METERS = 2.312797;
-        public static final double PASSING_SHOOT_LEFT_BLUE_ALLIANCE_WELDED_Y_METERS = 6.724438333;
-        
-        public static final double PASSING_SHOOT_LEFT_RED_ALLIANCE_ANDYMARK_X_METERS = 14.207236;
-        public static final double PASSING_SHOOT_LEFT_RED_ALLIANCE_ANDYMARK_Y_METERS = 6.702213333;
+        public static final double FUNNEL_POSITION_RED_ALLIANCE_WELDED_X_METERS   = 11.915394;
+        public static final double FUNNEL_POSITION_RED_ALLIANCE_WELDED_Y_METERS   = 4.034663;
+        public static final double FUNNEL_POSITION_BLUE_ALLIANCE_WELDED_X_METERS  = 4.625594;
+        public static final double FUNNEL_POSITION_BLUE_ALLIANCE_WELDED_Y_METERS  = 4.034663;
+        public static final double FUNNEL_POSITION_RED_ALLIANCE_ANDYMARK_X_METERS   = 11.901424;
+        public static final double FUNNEL_POSITION_RED_ALLIANCE_ANDYMARK_Y_METERS   = 4.034663;
+        public static final double FUNNEL_POSITION_BLUE_ALLIANCE_ANDYMARK_X_METERS  = 4.611624;
+        public static final double FUNNEL_POSITION_BLUE_ALLIANCE_ANDYMARK_Y_METERS  = 4.034663;
 
-        public static final double PASSING_SHOOT_LEFT_BLUE_ALLIANCE_ANDYMARK_X_METERS = 2.305812;
-        public static final double PASSING_SHOOT_LEFT_BLUE_ALLIANCE_ANDYMARK_Y_METERS = 6.702213333;
-        
-        public static final double FUNNEL_POSITION_RED_ALLIANCE_WELDED_X_METERS = 11.915394;
-        public static final double FUNNEL_POSITION_RED_ALLIANCE_WELDED_Y_METERS = 4.034663;
-
-        public static final double FUNNEL_POSITION_BLUE_ALLIANCE_WELDED_X_METERS = 4.625594;
-        public static final double FUNNEL_POSITION_BLUE_ALLIANCE_WELDED_Y_METERS = 4.034663;
-
-        public static final double FUNNEL_POSITION_RED_ALLIANCE_ANDYMARK_X_METERS = 11.901424;
-        public static final double FUNNEL_POSITION_RED_ALLIANCE_ANDYMARK_Y_METERS = 4.034663;
-
-        public static final double FUNNEL_POSITION_BLUE_ALLIANCE_ANDYMARK_X_METERS = 4.611624;
-        public static final double FUNNEL_POSITION_BLUE_ALLIANCE_ANDYMARK_Y_METERS = 4.034663;
-
-        public static final double FUNNEL_HEIGHT_METERS = 1.8288;
-        public static final double SHOOTER_EXIT_HEIGHT_METERS = 22 * 0.0254;
-
+        // ── Física del proyectil ───────────────────────────────────────
+        public static final double FUNNEL_HEIGHT_METERS          = 1.8288;
+        public static final double SHOOTER_EXIT_HEIGHT_METERS    = 22 * 0.0254; // 0.5588 m
         public static final double GRAVITY_METERS_PER_SECOND_SQUARED = 9.81;
-        public static final double APEX_MAX_HEIGHT_METERS = 2.4;
+        public static final double APEX_MAX_HEIGHT_METERS        = 2.4;
 
         public static final double APEX_RELATIVE_TO_SHOOTER_METERS =
             APEX_MAX_HEIGHT_METERS - SHOOTER_EXIT_HEIGHT_METERS;
@@ -249,19 +206,27 @@ public class Constants {
         public static final double TOTAL_TIME_SECONDS =
             TIME_GOING_UP_SECONDS + TIME_GOING_DOWN_SECONDS;
 
+        // ── Tiro default ───────────────────────────────────────────────
+        /**
+         * Distancia horizontal asumida para el tiro default [metros].
+         * CALIBRAR: medir la distancia típica de tiro sin visión.
+         */
         public static final double DEFAULT_HORIZONTAL_DISTANCE_METERS = 2.0;
 
         public static final double DEFAULT_HORIZONTAL_VELOCITY_METERS_PER_SECOND =
             DEFAULT_HORIZONTAL_DISTANCE_METERS / TOTAL_TIME_SECONDS;
 
-        // MODEL angle (same definition as ShootingHelper.getHoodAngleRadians()).
+        /**
+         * Ángulo del PROYECTIL para el tiro default [radianes].
+         * Este es el ángulo que devuelve ShootingHelper.getHoodAngleRadians().
+         * El ángulo físico del hood = 90° - este valor.
+         */
         public static final double DEFAULT_HOOD_ANGLE_RADIANS =
             Math.atan2(
                 VERTICAL_LAUNCH_VELOCITY_METERS_PER_SECOND,
                 DEFAULT_HORIZONTAL_VELOCITY_METERS_PER_SECOND
             );
 
-        // Keep alias to avoid breaking other code paths; name is misleading.
         public static final double DEFAULT_HOOD_ANGLE_ROT = DEFAULT_HOOD_ANGLE_RADIANS;
 
         public static final double DEFAULT_EXIT_SPEED_METERS_PER_SECOND =
@@ -270,23 +235,55 @@ public class Constants {
                 VERTICAL_LAUNCH_VELOCITY_METERS_PER_SECOND
             );
 
+        // ── Restricciones físicas del shooter ─────────────────────────
+        /**
+         * RPM máximas de las ruedas del shooter.
+         * CALIBRAR: ajustar según motor y reducción real.
+         */
         public static final double MAX_RPM = 6000.0;
-        public static final double WHEEL_DIAMETER_METERS = 4.0 * 0.0254;
-        public static final double WHEEL_CIRCUMFERENCE = WHEEL_DIAMETER_METERS * Math.PI;
 
+        /**
+         * Diámetro de las ruedas del shooter [metros].
+         * CALIBRAR: medir el diámetro real (4 pulgadas = 0.1016 m).
+         */
+        public static final double WHEEL_DIAMETER_METERS = 4.0 * 0.0254;
+        public static final double WHEEL_CIRCUMFERENCE   = WHEEL_DIAMETER_METERS * Math.PI;
         public static final double EXIT_SPEED_CONVERSION = WHEEL_CIRCUMFERENCE / 60.0;
 
+        /**
+         * Velocidad de salida máxima alcanzable [m/s].
+         * 60% de la velocidad libre para margen de control PID.
+         * CALIBRAR: aumentar el factor si los tiros caen cortos.
+         */
         public static final double MAXIMUM_EXIT_SPEED_METERS_PER_SECOND =
             MAX_RPM * EXIT_SPEED_CONVERSION * 0.60;
 
-        public static final double MINIMUM_HOOD_ANGLE_RADIANS = Math.toRadians(24);
-        public static final double MAXIMUM_HOOD_ANGLE_RADIANS = Math.toRadians(57);
+        /**
+         * Ángulo FÍSICO mínimo del hood [radianes] = 24°.
+         * Corresponde al encoder en 0.0 (posición home/stowed).
+         * CALIBRAR: medir el ángulo real del hood cuando el encoder está en 0.
+         */
+        public static final double MINIMUM_HOOD_ANGLE_RADIANS = Math.toRadians(24.0);
+
+        /**
+         * Ángulo FÍSICO máximo del hood [radianes] = 92°.
+         * Corresponde al encoder en HOOD_ENCODER_ROTATIONS_FOR_FULL_RANGE.
+         * CALIBRAR: medir el ángulo real del hood en extensión máxima.
+         *
+         * RELACIÓN CON EL PROYECTIL:
+         *   Si hood está a 24° → proyectil sale a 90° − 24° = 66°
+         *   Si hood está a 92° → proyectil sale a 90° − 92° = −2° (imposible)
+         *   ShootingHelper valida que el ángulo del proyectil esté dentro de este rango.
+         */
+        public static final double MAXIMUM_HOOD_ANGLE_RADIANS = Math.toRadians(92.0);
 
         public static final double MINIMUM_HORIZONTAL_DISTANCE_METERS = 0.1;
     }
 
+    // ════════════════════════════════════════════════════════════
+    // VISION CONSTANTS
+    // ════════════════════════════════════════════════════════════
     public static final class VisionConstants {
-
         public static final List<VisionEntries.CameraSpecifications> cameraSpecificationsList =
             List.of(
                 new VisionEntries.CameraSpecifications(
@@ -298,24 +295,6 @@ public class Constants {
                     VisionEnums.PoseEstimateNoiseLevel.FR_CAM,
                     1.0
                 ),
-                // new VisionEntries.CameraSpecifications(
-                //     "FRONT_LEFT_CAM",
-                //     new Transform3d(
-                //         new Translation3d(0.32, 0.32, 0.1778),
-                //         new Rotation3d(0, 0, 0)
-                //     ),
-                //     VisionEnums.PoseEstimateNoiseLevel.FL_CAM,
-                //     0.8
-                // ),
-                // new VisionEntries.CameraSpecifications(
-                //     "LEFT_CAM",
-                //     new Transform3d(
-                //         new Translation3d(0.32, 0.32, 0.1778),
-                //         new Rotation3d(0, 0, Math.toRadians(90))
-                //     ),
-                //     VisionEnums.PoseEstimateNoiseLevel.L_CAM,
-                //     0.8
-                // ),
                 new VisionEntries.CameraSpecifications(
                     "RIGHT_CAM",
                     new Transform3d(
@@ -327,27 +306,26 @@ public class Constants {
                 )
             );
 
-        public static final double MAXIMUM_AMBIGUITY_FOR_SINGLE_TAG = 0.40;
-        public static final double MAXIMUM_Z_ERROR_METERS = 0.40;
-        public static final double MAXIMUM_OBSERVATION_AGE_SECONDS = 0.15;
-
+        public static final double MAXIMUM_AMBIGUITY_FOR_SINGLE_TAG       = 0.40;
+        public static final double MAXIMUM_Z_ERROR_METERS                 = 0.40;
+        public static final double MAXIMUM_OBSERVATION_AGE_SECONDS        = 0.15;
         public static final double MAXIMUM_DISTANCE_FOR_SINGLE_TAG_METERS = 6.0;
-        public static final double MAXIMUM_DISTANCE_FOR_MULTI_TAG_METERS = 6.0;
-        public static final double MAXIMUM_YAW_RATE_RADIANS_PER_SECOND = 2.0;
-
-        public static final double MAXIMUM_LINEAR_STANDARD_DEVIATION_METERS = 1.0;
+        public static final double MAXIMUM_DISTANCE_FOR_MULTI_TAG_METERS  = 6.0;
+        public static final double MAXIMUM_YAW_RATE_RADIANS_PER_SECOND    = 2.0;
+        public static final double MAXIMUM_LINEAR_STANDARD_DEVIATION_METERS   = 1.0;
         public static final double MAXIMUM_ANGULAR_STANDARD_DEVIATION_RADIANS = 1.5;
     }
 
+    // ════════════════════════════════════════════════════════════
+    // FIELD CONSTANTS
+    // ════════════════════════════════════════════════════════════
     public static final class FieldCosntants {
-
         public static final AprilTagFieldLayout kTagLayout =
             AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark);
 
-        public static final double FIELD_LENGTH_METERS = 16.54175;
-        public static final double FIELD_WIDTH_METERS = 8.0137;
-
-        public static final boolean IS_ANDYMARK_FIELD = true;
+        public static final double  FIELD_LENGTH_METERS  = 16.54175;
+        public static final double  FIELD_WIDTH_METERS   = 8.0137;
+        public static final boolean IS_ANDYMARK_FIELD    = true;
 
         public static long[] getShootingValidTagIdentifiers() {
             Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Red);
@@ -357,364 +335,345 @@ public class Constants {
         }
     }
 
+    // ════════════════════════════════════════════════════════════
+    // HOOD CONSTANTS
+    // ════════════════════════════════════════════════════════════
     /**
-     * 
-     * SISTEMA DE TIRO:
-     * - DEFAULT: Valores fijos cuando no hay visión válida
-     * - CALCULADO: Modelo matemático cuando hay AprilTag válido
-     * 
-     * CONVERSIÓN:
-     * - Hood físico: 24° a 57° (rango mecánico)
-     * - Encoder: 0.0 rot (en 24°) a 126.003 rot (en 57°)
-     * - Conversión: 218.76 rotaciones por radián
+     * SISTEMA DE ÁNGULOS — RESUMEN:
+     *
+     *   Hood físico: 24° (mín, encoder = 0) → 92° (máx, encoder = FULL_RANGE)
+     *   Proyectil:   complementario del hood físico = 90° − hood_físico
+     *     → Si hood = 24° físico → proyectil = 66°
+     *     → Si hood = 57° físico → proyectil = 33°
+     *     → Si hood = 92° físico → proyectil = −2° (inválido, ShootingHelper lo rechaza)
+     *
+     *   CONVERSION_RAD_TO_ROT = FULL_RANGE / (92° − 24° en radianes)
+     *                         = 126.223  / 1.1868 rad
+     *                         ≈ 106.36 rot/rad
      */
     public static final class HoodConstants {
 
-        // ========================================
-        // CAN IDs
-        // ========================================
-        
-        public static final int HOOD_ANGLE_TALON_ID = 15;
+        // ── CAN IDs ───────────────────────────────────────────────────
+        public static final int HOOD_ANGLE_TALON_ID            = 15;
         public static final int RIGHT_HOOD_PROPULSION_TALON_ID = 16;
-        public static final int LEFT_HOOD_PROPULSION_TALON_ID = 17;
-        public static final int INDEXER_TALON_ID = 22;
+        public static final int LEFT_HOOD_PROPULSION_TALON_ID  = 17;
+        public static final int INDEXER_TALON_ID               = 22;
 
-        // ========================================
-        // CONVERSIÓN DE ÁNGULO A ROTACIONES
-        // ========================================
-        
+        // ── Conversión ángulo → rotaciones del encoder ────────────────
+
         /**
-         * Rotaciones totales del encoder para el rango completo del hood
-         * Medido: de min a max = 126.003 rotaciones
+         * Rotaciones del encoder de mínimo a máximo (medido empíricamente).
+         * CALIBRAR: mover el hood de 24° a 92° físico y leer el encoder en Tuner X.
+         * Unidad: rotaciones del encoder (sin dimensión).
          */
         public static final double HOOD_ENCODER_ROTATIONS_FOR_FULL_RANGE = 126.223;
-        
+
         /**
-         * Conversión: radianes → rotaciones del encoder
-         * 
-         * CÁLCULO:
-         * Rango ángulo = 57° - 24° = 33° = 0.576 radianes
-         * CONVERSION = 126.003 / 0.576 = 218.76 rot/rad
-         * 
-         * VERIFICACIÓN:
-         * - 0.1 rad (5.7°) → 21.88 rotations
-         * - 0.366 rad (21°) → 80.06 rotations ✓
+         * Factor de conversión: radianes → rotaciones del encoder.
+         *
+         * Cálculo automático:
+         *   rango_rad = MAXIMUM (92°) − MINIMUM (24°) = 68° = 1.1868 rad
+         *   CONVERSION = 126.223 / 1.1868 ≈ 106.36 rot/rad
+         *
+         * Este valor se recalcula si cambia HOOD_ENCODER_ROTATIONS_FOR_FULL_RANGE.
+         * Unidad: rotaciones / radián.
          */
-        public static final double CONVERSION_RATIO_RAD_TO_ROT = 
-            HOOD_ENCODER_ROTATIONS_FOR_FULL_RANGE / 
-            (ShootingConstants.MAXIMUM_HOOD_ANGLE_RADIANS - ShootingConstants.MINIMUM_HOOD_ANGLE_RADIANS);
-        // = 218.76 rotaciones por radián
-        
+        public static final double CONVERSION_RATIO_RAD_TO_ROT =
+            HOOD_ENCODER_ROTATIONS_FOR_FULL_RANGE /
+            (ShootingConstants.MAXIMUM_HOOD_ANGLE_RADIANS -
+             ShootingConstants.MINIMUM_HOOD_ANGLE_RADIANS);
+
         /**
-         * Gear ratio de las ruedas del shooter
-         * 1.0 = conexión directa motor-rueda
-         */
-        public static final double HOOD_SHOOTING_GEAR_RATIO = 1.0;
-        
-        /**
-         * Conversión: m/s de salida → RPS de ruedas
-         * = GEAR_RATIO / circunferencia_rueda
+         * Factor de conversión: velocidad de salida [m/s] → RPS de las ruedas.
+         * Las ruedas van directo al motor (gear ratio 1:1).
+         * Unidad: (rot/s) / (m/s) = 1/m
          */
         public static final double CONVERSION_RATIO_FROM_METERS_TO_RPS =
-            HOOD_SHOOTING_GEAR_RATIO / ShootingConstants.WHEEL_CIRCUMFERENCE;
+            1.0 / ShootingConstants.WHEEL_CIRCUMFERENCE;
 
-        // ========================================
-        // GEOMETRÍA DEL HOOD
-        // ========================================
-        
-        /**
-         * Ángulo complementario (90°)
-         * 
-         * Conversión de ángulo de trayectoria a ángulo físico del hood:
-         * hood_angle = 90° - trayectoria_angle
-         */
+        // ── Geometría ─────────────────────────────────────────────────
+
+        /** 90° en radianes — para el cálculo del complementario. */
         public static final double COMPLEMENTARY_ANGLE = Math.toRadians(90.0);
 
-        /**
-         * Posición home (encoder = 0.0 cuando hood = 24°)
-         */
+        /** Posición home del encoder = 0.0 (hood en 24° físico). */
         public static final double HOOD_HOME_POSITION_ROTATIONS = 0.0;
 
         /**
-         * Offset del ángulo mínimo (24° = 0.419 rad)
-         * 
-         * Se resta para obtener ángulo relativo:
-         * hood_relative = hood_physical - 24°
+         * Offset del ángulo mínimo [rad] = 24°.
+         * Se resta para obtener el ángulo relativo al encoder.
+         * hood_relativo = hood_físico − OFFSET
          */
-        public static final double HOOD_ANGLE_OFFSET_RADIANS = 
+        public static final double HOOD_ANGLE_OFFSET_RADIANS =
             ShootingConstants.MINIMUM_HOOD_ANGLE_RADIANS;
 
-        // ========================================
-        // PID - HOOD ANGLE MOTOR
-        // ========================================
-        
+        // ── Límites seguros del encoder ───────────────────────────────
+
+        /** Rotación mínima segura [rot]. Margen negativo para errores de zeroing. */
+        public static final double HOOD_SAFE_MIN_ROTATIONS = -5.0;
+
+        /** Rotación máxima segura [rot]. 5% de margen sobre el rango completo. */
+        public static final double HOOD_SAFE_MAX_ROTATIONS =
+            HOOD_ENCODER_ROTATIONS_FOR_FULL_RANGE * 1.05;
+
+        // ── Dirección de las ruedas ───────────────────────────────────
         /**
-         * PID para control de POSICIÓN del hood
-         * 
-         * VALORES CORREGIDOS:
-         * - kP = 50.0 (era 0.11, muy bajo)
-         * - kG = 0.25 (era 0.0, crítico para sostener contra gravedad)
-         * - kD = 0.5 (era 0.0, necesario para amortiguación)
+         * Las ruedas están montadas en lados OPUESTOS de la barra de disparo.
+         * Para que ambas empujen la nota en la misma dirección deben girar
+         * en sentidos opuestos.
+         *
+         * Si la nota sale en sentido contrario al esperado:
+         *   → Intercambiar RIGHT_WHEEL_INVERTED y LEFT_WHEEL_INVERTED.
+         *
+         * ⚠️  NUNCA compartir el objeto MotorOutputConfigs entre ruedas.
+         *     HoodSubsystem crea un objeto MotorOutputConfigs independiente
+         *     para cada rueda usando estas constantes.
+         */
+        public static final InvertedValue RIGHT_WHEEL_INVERTED = InvertedValue.CounterClockwise_Positive;
+        public static final InvertedValue LEFT_WHEEL_INVERTED  = InvertedValue.Clockwise_Positive;
+
+        // ── PID Hood Angle ────────────────────────────────────────────
+        /**
+         * Ganancias para MotionMagicExpoTorqueCurrentFOC del hood (Phoenix Pro).
+         *
+         * kS  [A]        Corriente de fricción estática. Aumentar si el motor no arranca.
+         * kG  [A]        Compensación de gravedad (Arm_Cosine). CRÍTICO para sostener el hood.
+         *                Aumentar si el hood cae al soltar; reducir si vibra.
+         * kV  [A/(rot/s)] Feedforward de velocidad. Calibrar con SysId.
+         * kA  [A/(rot/s²)] Feedforward de aceleración.
+         * kP  [A/rot]    Proporcional. Aumentar para respuesta más rápida (con riesgo de oscilación).
+         * kI  [A/(rot·s)] Integral. Mantener en 0 para empezar.
+         * kD  [A/(rot/s)] Derivativo. Aumentar para amortiguamiento.
          */
         public static final Slot0Configs HOOD_ANGLE_SLOT_CONFIGS = new Slot0Configs()
-            .withKS(0.1)       // Static friction
-            .withKG(0.25)      // ⚠️ Gravity compensation - CRÍTICO
-            .withKV(0.12)      // Velocity feedforward
-            .withKA(0.01)      // Acceleration feedforward
-            .withKP(50.0)      // ⚠️ Proporcional - CORREGIDO (era 0.11)
-            .withKI(0.0)       // Integral
-            .withKD(0.5)       // ⚠️ Derivative - AÑADIDO (era 0.0)
+            .withKS(0.1)
+            .withKG(0.25)
+            .withKV(0.12)
+            .withKA(0.01)
+            .withKP(50.0)
+            .withKI(0.0)
+            .withKD(0.5)
             .withGravityType(GravityTypeValue.Arm_Cosine);
 
         /**
-         * Motion Magic para movimientos suaves
-         * ⚠️ CRÍTICO - Sin esto el motor NO se mueve
+         * Motion Magic para movimientos suaves del hood.
+         *
+         * CruiseVelocity [RPS]   Velocidad máxima del perfil. Reducir si el hood golpea topes.
+         * Acceleration   [RPS/s] Aceleración del perfil. ~2× CruiseVelocity es un buen inicio.
+         * Jerk           [RPS/s²] Suavizado (S-curve). ~10× Acceleration.
          */
-        public static final MotionMagicConfigs HOOD_MOTION_MAGIC_CONFIGS = 
+        public static final MotionMagicConfigs HOOD_MOTION_MAGIC_CONFIGS =
             new MotionMagicConfigs()
-                .withMotionMagicCruiseVelocity(300.0)     // RPS
-                .withMotionMagicAcceleration(600.0)       // RPS/s
-                .withMotionMagicJerk(6000.0);             // RPS/s/s
+                .withMotionMagicCruiseVelocity(300.0)
+                .withMotionMagicAcceleration(600.0)
+                .withMotionMagicJerk(6000.0);
 
         /**
-         * Motor output configs
-         * ⚠️ CRÍTICO - Brake mode para sostener contra gravedad
+         * Motor output del hood.
+         * NeutralMode = Brake: CRÍTICO, sin esto el hood cae por gravedad.
+         * Inverted: ajustar si el hood se mueve al revés.
          */
-        public static final MotorOutputConfigs HOOD_ANGLE_MOTOR_OUTPUT_CONFIGS = 
+        public static final MotorOutputConfigs HOOD_ANGLE_MOTOR_OUTPUT_CONFIGS =
             new MotorOutputConfigs()
                 .withNeutralMode(NeutralModeValue.Brake)
                 .withInverted(InvertedValue.Clockwise_Positive);
 
-        /**
-         * Current limits para protección
-         */
-        public static final CurrentLimitsConfigs HOOD_ANGLE_CURRENT_LIMITS = 
+        public static final CurrentLimitsConfigs HOOD_ANGLE_CURRENT_LIMITS =
             new CurrentLimitsConfigs()
                 .withSupplyCurrentLimit(40.0)
                 .withSupplyCurrentLimitEnable(true)
                 .withStatorCurrentLimit(60.0)
                 .withStatorCurrentLimitEnable(true);
 
-        /**
-         * Software limits (0 a 126.003 + margen)
-         */
-        public static final SoftwareLimitSwitchConfigs HOOD_SOFTWARE_LIMITS = 
+        public static final SoftwareLimitSwitchConfigs HOOD_SOFTWARE_LIMITS =
             new SoftwareLimitSwitchConfigs()
                 .withForwardSoftLimitEnable(true)
-                .withForwardSoftLimitThreshold(HOOD_ENCODER_ROTATIONS_FOR_FULL_RANGE * 1.05)   // 126.003 * 1.05
+                .withForwardSoftLimitThreshold(HOOD_SAFE_MAX_ROTATIONS)
                 .withReverseSoftLimitEnable(true)
-                .withReverseSoftLimitThreshold(-5.0);   // Margen negativo
+                .withReverseSoftLimitThreshold(HOOD_SAFE_MIN_ROTATIONS);
 
-        // ========================================
-        // PID - WHEEL MOTORS
-        // ========================================
-        
+        // ── PID Ruedas ────────────────────────────────────────────────
         /**
-         * PID para control de VELOCIDAD de ruedas
-         * 
-        * VALORES CORREGIDOS:
-        * - kP = 0.5 (era 0.11, muy bajo)
-         * - kV = 0.12 (calibrar: kV = 12 / velocidad_máxima_RPS)
+         * Ganancias para VelocityTorqueCurrentFOC de las ruedas (Phoenix Pro).
+         *
+         * kS  [A]         Corriente de fricción. Aumentar si las ruedas no arrancan.
+         * kV  [A/(rot/s)] Feedforward de velocidad. VALOR MÁS IMPORTANTE.
+         *                 Calibrar: aumentar si las ruedas no alcanzan la velocidad objetivo.
+         * kP  [A/(rot/s)] Proporcional. Corrige el error residual tras kV.
+         *
+         * NOTA: Con TorqueCurrentFOC, las unidades son Amperios, no Voltios.
+         *       kV típico con FOC: 0.05 – 0.15 A/(rot/s).
+         *       CALIBRAR con Tuner X → SysId o ajuste manual.
          */
         public static final Slot0Configs RIGHT_HOOD_PROPULSION_SLOT_CONFIGS = new Slot0Configs()
-            .withKS(0.2)       // Static friction
-            .withKG(0.0)       // Sin gravity (ruedas horizontales)
-            .withKV(0.002)      // Velocity feedforward
-            .withKA(0.01)      // Acceleration feedforward
-            .withKP(1.2)       // ⚠️ Proporcional - CORREGIDO (era 0.11)
-            .withKI(0.0)       // Integral
-            .withKD(0.0);      // Derivative
+            .withKS(0.1)
+            .withKG(0.0)
+            .withKV(0.12)
+            .withKA(0.01)
+            .withKP(0.5)
+            .withKI(0.0)
+            .withKD(0.0);
 
-        public static final Slot0Configs LEFT_HOOD_PROPULSION_SLOT_CONFIGS = 
+        // La izquierda usa las mismas ganancias (la inversión está en el MotorOutput de cada una)
+        public static final Slot0Configs LEFT_HOOD_PROPULSION_SLOT_CONFIGS =
             RIGHT_HOOD_PROPULSION_SLOT_CONFIGS;
 
         /**
-         * Motor output configs para ruedas
+         * Límites de corriente para las ruedas.
+         * StatorCurrentLimit más alto para spin-up rápido.
          */
-        public static final MotorOutputConfigs WHEEL_MOTOR_OUTPUT_CONFIGS = 
-            new MotorOutputConfigs()
-                .withNeutralMode(NeutralModeValue.Coast)
-                .withInverted(InvertedValue.Clockwise_Positive);
-
-        /**
-         * Current limits para ruedas
-         */
-        public static final CurrentLimitsConfigs WHEEL_CURRENT_LIMITS = 
+        public static final CurrentLimitsConfigs WHEEL_CURRENT_LIMITS =
             new CurrentLimitsConfigs()
                 .withSupplyCurrentLimit(40.0)
                 .withSupplyCurrentLimitEnable(true)
-                .withStatorCurrentLimit(80.0)  // Más alto para spin-up
+                .withStatorCurrentLimit(80.0)
                 .withStatorCurrentLimitEnable(true);
 
-        // ========================================
-        // INDEXER
-        // ========================================
-        
+        // ── Indexer ───────────────────────────────────────────────────
         public static final Slot0Configs INDEXER_SLOT_CONFIGS = new Slot0Configs();
-        
-        public static final MotorOutputConfigs INDEXER_MOTOR_OUTPUT_CONFIGS = 
+
+        /**
+         * Motor output del indexer.
+         * NeutralMode = Brake: frena activamente al apagar para no sobre-alimentar.
+         * Inverted: ajustar según la dirección real del mecanismo de alimentación.
+         */
+        public static final MotorOutputConfigs INDEXER_MOTOR_OUTPUT_CONFIGS =
             new MotorOutputConfigs()
                 .withNeutralMode(NeutralModeValue.Brake)
                 .withInverted(InvertedValue.CounterClockwise_Positive);
-        
-        public static final CurrentLimitsConfigs INDEXER_CURRENT_LIMITS = 
+
+        public static final CurrentLimitsConfigs INDEXER_CURRENT_LIMITS =
             new CurrentLimitsConfigs()
                 .withSupplyCurrentLimit(30.0)
                 .withSupplyCurrentLimitEnable(true)
                 .withStatorCurrentLimit(40.0)
                 .withStatorCurrentLimitEnable(true);
-        
+
         /**
-         * Velocidad del indexer (duty cycle 0-1)
-         * 0.8 = 80% de potencia
+         * Duty cycle del indexer al disparar [0.0 – 1.0].
+         * 0.8 = 80% de potencia (9.6 V efectivos).
+         * CALIBRAR: reducir si la nota se atasca, aumentar si sale lento.
          */
         public static final double INDEXER_SPEED = 0.8;
 
-        // ========================================
-        // TOLERANCIAS
-        // ========================================
-        
+        // ── Tolerancias ───────────────────────────────────────────────
+
         /**
-         * Tolerancia de ángulo del hood (rotaciones)
-         * 
-         * 2.0 rot = 2.0 / 218.76 = 0.0091 rad = 0.52°
-         * ⚠️ AUMENTADO de 0.01 (imposible) → 2.0 (razonable)
+         * Tolerancia de posición del hood [rotaciones].
+         * 2.0 rot / 106.36 rot·rad⁻¹ ≈ 0.019 rad ≈ 1.1°
+         * CALIBRAR: reducir para mayor precisión (readyToShoot tarda más).
+         *           Aumentar si readyToShoot nunca se activa.
          */
         public static final double HOOD_ANGLE_TOLERANCE_ROT = 2.0;
-        
+
         /**
-         * Tolerancia de velocidad de ruedas (RPS)
-         * 
-         * 2.0 RPS = ~4% de error a 50 RPS
-         * ⚠️ AUMENTADO de 0.05 (imposible) → 2.0 (razonable)
+         * Tolerancia de velocidad de las ruedas [RPS].
+         * 2.0 RPS ≈ 4% de error a 50 RPS.
+         * CALIBRAR: reducir para disparar más preciso.
+         *           Aumentar si readyToShoot nunca se activa.
          */
         public static final double HOOD_SHOOTING_VELOCITY_TOLERANCE_RPS = 2.0;
 
-        // ========================================
-        // POST-SHOT COASTING
-        // ========================================
-        
+        // ── Post-shot coasting ────────────────────────────────────────
+
         /**
-         * Tiempo mínimo antes de stow (segundos)
-         * ⚠️ AUMENTADO de 0.1 → 0.3
+         * Tiempo mínimo en POST_SHOT_COASTING antes de stow [s].
+         * Asegura que la nota salga antes de mover el hood.
+         * CALIBRAR: aumentar si la nota choca con el hood al stow.
          */
         public static final double POST_SHOT_COAST_MINIMUM_TIME_SECONDS = 0.3;
-        
+
         /**
-         * Timeout máximo (segundos)
-         * ⚠️ AUMENTADO de 0.75 → 2.0
+         * Timeout máximo en POST_SHOT_COASTING [s].
+         * Si las ruedas no frenan, fuerza el stow de todas formas.
          */
         public static final double POST_SHOT_COAST_MAXIMUM_TIME_SECONDS = 2.0;
-        
+
         /**
-         * Threshold de velocidad "suficientemente lenta" (RPS)
+         * Velocidad de ruedas considerada "detenida" [RPS].
+         * El sistema transiciona a STOWING cuando ambas ruedas están bajo este umbral.
          */
         public static final double POST_SHOT_WHEEL_STOP_THRESHOLD_ROTATIONS_PER_SECOND = 1.0;
-
     }
 
+    // ════════════════════════════════════════════════════════════
+    // INTAKE CONSTANTS
+    // ════════════════════════════════════════════════════════════
     public static final class IntakeConstants {
-
-        public static final int INTAKE_MOTOR_ID = 23;
-        public static final int PIVOT_INTAKE__RIGHT_MOTOR_ID = 19;
-        public static final int PIVOT_INTAKE_LEFT_MOTOR_ID = 18;
+        public static final int    INTAKE_MOTOR_ID               = 23;
+        public static final int    PIVOT_INTAKE__RIGHT_MOTOR_ID  = 19;
+        public static final int    PIVOT_INTAKE_LEFT_MOTOR_ID    = 18;
 
         public static final double INTAKE_ACTIVATION_VOLTAGE_VOLTS = 12.0 * 0.6;
 
-        // ---------------------------
-        // Your calibration-friendly space (normalized rotations 0..1)
-        // 0.0 = fully retracted, 1.0 = fully deployed
-        // ---------------------------
         public static final double PIVOT_RETRACT_POSITION_ROTATIONS = 0.0;
-        public static final double PIVOT_DEPLOY_POSITION_ROTATIONS = 1.0;
+        public static final double PIVOT_DEPLOY_POSITION_ROTATIONS  = 1.0;
 
-        // Safety clamp (still in normalized rotations)
         public static final double PIVOT_SOFT_LIMIT_MINIMUM_ROTATIONS = -0.10;
-        public static final double PIVOT_SOFT_LIMIT_MAXIMUM_ROTATIONS = 1.10;
+        public static final double PIVOT_SOFT_LIMIT_MAXIMUM_ROTATIONS =  1.10;
 
-        public static final double PIVOT_POSITION_TOLERANCE_ROTATIONS = 0.02;
+        public static final double PIVOT_POSITION_TOLERANCE_ROTATIONS  = 0.02;
         public static final double PIVOT_POSITION_HYSTERESIS_ROTATIONS = 0.02;
 
-        // Simple PID gains (RIO PID in subsystem)
         public static final double PIVOT_POSITION_PROPORTIONAL_GAIN = 0.5;
-        public static final double PIVOT_POSITION_INTEGRAL_GAIN = 0.0;
-        public static final double PIVOT_POSITION_DERIVATIVE_GAIN = 0.0;
+        public static final double PIVOT_POSITION_INTEGRAL_GAIN     = 0.0;
+        public static final double PIVOT_POSITION_DERIVATIVE_GAIN   = 0.0;
 
         public static final double PIVOT_CONTROL_MAXIMUM_ABSOLUTE_VOLTAGE_VOLTS = 12.0;
 
-        // ---------------------------
-        // REAL robot calibration placeholders (raw relative encoder rotations)
-        // normalized = (raw - retractRaw) / (deployRaw - retractRaw)
-        // ---------------------------
         public static final double PIVOT_RAW_ENCODER_RETRACT_ROTATIONS = 0.0;
-        public static final double PIVOT_RAW_ENCODER_DEPLOY_ROTATIONS = 25.0;
-
-        // If you always boot with the intake physically retracted, this makes life easy.
+        public static final double PIVOT_RAW_ENCODER_DEPLOY_ROTATIONS  = 25.0;
         public static final boolean PIVOT_ZERO_ENCODER_ON_BOOT_TO_RETRACT = true;
 
-        // ---------------------------
-        // SIM calibration (SingleJointedArmSim angles in radians)
-        // normalized = (angle - retractAngle) / (deployAngle - retractAngle)
-        // ---------------------------
         public static final double PIVOT_SIM_RETRACT_ANGLE_RADIANS = 0.0;
-        public static final double PIVOT_SIM_DEPLOY_ANGLE_RADIANS = 1.57; // ~90 degrees, tweak later if you want
+        public static final double PIVOT_SIM_DEPLOY_ANGLE_RADIANS  = 1.57;
 
-        // MapleSim intake geometry (bounding box)
-        public static final double MAPLESIM_INTAKE_WIDTH_METERS = 0.70;
-        public static final double MAPLESIM_INTAKE_EXTENSION_METERS = 0.20;
-        public static final int MAPLESIM_INTAKE_CAPACITY = 1;
+        public static final double  MAPLESIM_INTAKE_WIDTH_METERS     = 0.70;
+        public static final double  MAPLESIM_INTAKE_EXTENSION_METERS = 0.20;
+        public static final int     MAPLESIM_INTAKE_CAPACITY         = 1;
 
-        // Pivot arm simulation model
-        public static final double PIVOT_SIM_GEAR_REDUCTION = 60.0;
-        public static final double PIVOT_SIM_MOMENT_OF_INERTIA = 0.002;
-        public static final double PIVOT_SIM_ARM_LENGTH_METERS = 0.25;
-        public static final double PIVOT_SIM_MIN_ANGLE_RADIANS = -0.2;
-        public static final double PIVOT_SIM_MAX_ANGLE_RADIANS = 1.8;
-        public static final double PIVOT_SIM_START_ANGLE_RADIANS = 0.0;
-        public static final int ROLLER_MOTOR_ID = 23;
-        public static final int PIVOT_INTAKE_RIGHT_MOTOR = 19;
-        public static final int PIVOT_INTAKE_LEFT_MOTOR = 18;
+        public static final double  PIVOT_SIM_GEAR_REDUCTION      = 60.0;
+        public static final double  PIVOT_SIM_MOMENT_OF_INERTIA   = 0.002;
+        public static final double  PIVOT_SIM_ARM_LENGTH_METERS   = 0.25;
+        public static final double  PIVOT_SIM_MIN_ANGLE_RADIANS   = -0.2;
+        public static final double  PIVOT_SIM_MAX_ANGLE_RADIANS   = 1.8;
+        public static final double  PIVOT_SIM_START_ANGLE_RADIANS = 0.0;
+
+        public static final int     ROLLER_MOTOR_ID            = 23;
+        public static final int     PIVOT_INTAKE_RIGHT_MOTOR   = 19;
+        public static final int     PIVOT_INTAKE_LEFT_MOTOR    = 18;
         public static final boolean PIVOT_RIGHT_MOTOR_INVERTED = false;
-
-
     }
 
+    // ════════════════════════════════════════════════════════════
+    // CLIMBER CONSTANTS
+    // ════════════════════════════════════════════════════════════
     public static final class ClimberConstants {
-
-        public static final int LEFT_CLIMBER_MOTOR_ID = 20;
-        public static final int RIGHT_CLIMBER_MOTOR_ID = 21;
+        public static final int    LEFT_CLIMBER_MOTOR_ID  = 20;
+        public static final int    RIGHT_CLIMBER_MOTOR_ID = 21;
 
         public static final double CLIMBER_MAX_DUTY_CYCLE = 0.8;
 
-        // Positions (rotations)
         public static final double CLIMBER_RETRACTED_TARGET_POSITION_ROTATIONS = 0.0;
-        public static final double CLIMBER_EXTENDED_POSITION_ROTATIONS = 0.0; // <-- AJUSTA esto (ahorita tienes 0)
+        public static final double CLIMBER_EXTENDED_POSITION_ROTATIONS         = 0.0;
 
-        // “Ya llegó” tolerance (rotations)
         public static final double CLIMBER_POSITION_TOLERANCE_ROTATIONS = 0.05;
 
-        // Manual voltage scaling
         public static final double CLIMBER_MANUAL_VOLTAGE_VOLTS =
             Constants.BATTERY_VOLTAGE * CLIMBER_MAX_DUTY_CYCLE;
 
-        // PID gains
         public static final double CLIMBER_POSITION_PROPORTIONAL_GAIN = 6.0;
-        public static final double CLIMBER_POSITION_INTEGRAL_GAIN = 0.0;
-        public static final double CLIMBER_POSITION_DERIVATIVE_GAIN = 0.2;
+        public static final double CLIMBER_POSITION_INTEGRAL_GAIN     = 0.0;
+        public static final double CLIMBER_POSITION_DERIVATIVE_GAIN   = 0.2;
 
-        // Integrator clamp (volts)
         public static final double CLIMBER_PID_INTEGRATOR_MINIMUM_VOLTS = -Constants.BATTERY_VOLTAGE;
-        public static final double CLIMBER_PID_INTEGRATOR_MAXIMUM_VOLTS = Constants.BATTERY_VOLTAGE;
+        public static final double CLIMBER_PID_INTEGRATOR_MAXIMUM_VOLTS =  Constants.BATTERY_VOLTAGE;
 
-        // Output clamp (volts)
         public static final double CLIMBER_OUTPUT_MINIMUM_VOLTS = -Constants.BATTERY_VOLTAGE;
-        public static final double CLIMBER_OUTPUT_MAXIMUM_VOLTS = Constants.BATTERY_VOLTAGE;
+        public static final double CLIMBER_OUTPUT_MAXIMUM_VOLTS =  Constants.BATTERY_VOLTAGE;
 
-        // Averaging factor (keep it explicit even if it’s “mathy”)
         public static final double CLIMBER_AVERAGE_MULTIPLIER = 0.5;
 
-        private ClimberConstants() {
-            // Prevent instantiation
-        }
+        private ClimberConstants() {}
     }
 }
