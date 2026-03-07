@@ -483,7 +483,7 @@ public class Constants {
         public static final MotorOutputConfigs HOOD_ANGLE_MOTOR_OUTPUT_CONFIGS = 
             new MotorOutputConfigs()
                 .withNeutralMode(NeutralModeValue.Brake)
-                .withInverted(InvertedValue.CounterClockwise_Positive);
+                .withInverted(InvertedValue.Clockwise_Positive);
 
         /**
          * Current limits para protección
