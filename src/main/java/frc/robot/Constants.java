@@ -3,12 +3,14 @@ package frc.robot;
 import java.util.List;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.signals.GravityTypeValue;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.util.Units;
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
@@ -359,19 +361,20 @@ public class Constants {
 
         public static final Slot0Configs HOOD_ANGLE_SLOT_CONFIGS = new Slot0Configs()
             .withKS(0.1)
-            .withKG(0.0)
+            .withKG(0.15)
             .withKV(0.12)
             .withKA(0.0)
-            .withKP(0.11)
+            .withKP(24.0)
             .withKI(0.0)
-            .withKD(0.0);
+            .withKD(0.4)
+            .withGravityType(GravityTypeValue.Arm_Cosine);
 
         public static final Slot0Configs RIGHT_HOOD_PROPULSION_SLOT_CONFIGS = new Slot0Configs()
             .withKS(0.1)
             .withKG(0.0)
             .withKV(0.12)
             .withKA(0.0)
-            .withKP(0.11)
+            .withKP(0.3)
             .withKI(0.0)
             .withKD(0.0);
 
@@ -380,7 +383,7 @@ public class Constants {
             .withKG(0.0)
             .withKV(0.12)
             .withKA(0.0)
-            .withKP(0.11)
+            .withKP(0.3)
             .withKI(0.0)
             .withKD(0.0);
 
@@ -389,20 +392,23 @@ public class Constants {
             .withKG(0.0)
             .withKV(0.12)
             .withKA(0.0)
-            .withKP(0.11)
+            .withKP(0.3)
             .withKI(0.0)
             .withKD(0.0);
 
         public static final double HOOD_SHOOTING_GEAR_RATIO = 1.0;
-        public static final double HOOD_ANGLE_GEAR_RATIO = 1.0;
+
+        public static final double HOOD_ANGLE_GEAR_RATIO = 1 /  ((
+            Units.radiansToRotations(ShootingConstants.MAXIMUM_HOOD_ANGLE_RADIANS)-
+            Units.radiansToRotations(ShootingConstants.MINIMUM_HOOD_ANGLE_RADIANS))/126.003);
 
         public static final double CONVERSION_RATIO_FROM_METERS_TO_RPS =
             HOOD_SHOOTING_GEAR_RATIO / ShootingConstants.WHEEL_CIRCUMFERENCE;
 
         public static final double INDEXER_SPEED = 0.95;
 
-        public static final double HOOD_ANGLE_TOLERANCE_ROT = 0.01;
-        public static final double HOOD_SHOOTING_VELOCITY_TOLERANCE_RPS = 0.05;
+        public static final double HOOD_ANGLE_TOLERANCE_ROT = 0.5;
+        public static final double HOOD_SHOOTING_VELOCITY_TOLERANCE_RPS = 0.5;
 
         public static final double CONVERSION_RATIO_RAD_TO_ROT =
             HOOD_ANGLE_GEAR_RATIO / (2.0 * Math.PI);
@@ -413,7 +419,7 @@ public class Constants {
         public static final double HOOD_HOME_POSITION_ROTATIONS = 0.0;
 
         // Offset in radians applied AFTER complementary conversion and BEFORE rotations.
-        public static final double HOOD_ANGLE_OFFSET_RADIANS = 0.0;
+        public static final double HOOD_ANGLE_OFFSET_RADIANS = ShootingConstants.MINIMUM_HOOD_ANGLE_RADIANS;
 
         // Post-shot behavior: cut wheels + indexer first, then return hood to home.
         public static final double POST_SHOT_COAST_MINIMUM_TIME_SECONDS = 0.10;
@@ -421,20 +427,7 @@ public class Constants {
 
         public static final double POST_SHOT_WHEEL_STOP_THRESHOLD_ROTATIONS_PER_SECOND = 1.0;
 
-        // Shooter / hood simulation parameters (must match real mechanism ratios)
 
-        // Rotor rotations per shooter wheel rotation (example: 2.0 means rotor spins 2x wheel)
-        public static final double SHOOTER_WHEEL_ROTOR_TO_WHEEL_GEAR_RATIO = 1.0;
-
-        // Rotor rotations per hood arm rotation (example: 100.0 means rotor spins 100x arm)
-        public static final double HOOD_ANGLE_ROTOR_TO_ARM_GEAR_RATIO = 1.0;
-
-        // Rough inertias (tune if you care about realism; otherwise just keep stable values)
-        public static final double SHOOTER_WHEEL_MOMENT_OF_INERTIA_KG_METERS_SQUARED = 0.001;
-        public static final double HOOD_ARM_MOMENT_OF_INERTIA_KG_METERS_SQUARED = 0.004;
-
-        // Hood arm geometry (meters) for SingleJointedArmSim (tune)
-        public static final double HOOD_ARM_LENGTH_METERS = 0.33;
     }
 
     public static final class IntakeConstants {

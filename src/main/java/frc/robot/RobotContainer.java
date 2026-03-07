@@ -22,6 +22,7 @@ import frc.robot.Constants.VisionConstants;
 import frc.robot.Drive.CommandSwerveDrivetrain;
 import frc.robot.Drive.DriveCommands;
 import frc.robot.Drive.generated.TunerConstants;
+import frc.robot.Shooting.HoodSubsystem;
 import frc.robot.Shooting.ShootingHelper;
 import frc.robot.Util.SparkMaxMotorTestCmd;
 import frc.robot.Util.TalonFxMotorTestCmd;
