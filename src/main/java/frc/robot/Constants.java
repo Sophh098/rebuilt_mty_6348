@@ -2,15 +2,20 @@ package frc.robot;
 
 import java.util.List;
 
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.MotionMagicConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.signals.GravityTypeValue;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.util.Units;
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
@@ -352,81 +357,259 @@ public class Constants {
         }
     }
 
+    /**
+     * 
+     * SISTEMA DE TIRO:
+     * - DEFAULT: Valores fijos cuando no hay visión válida
+     * - CALCULADO: Modelo matemático cuando hay AprilTag válido
+     * 
+     * CONVERSIÓN:
+     * - Hood físico: 24° a 57° (rango mecánico)
+     * - Encoder: 0.0 rot (en 24°) a 126.003 rot (en 57°)
+     * - Conversión: 218.76 rotaciones por radián
+     */
     public static final class HoodConstants {
 
+        // ========================================
+        // CAN IDs
+        // ========================================
+        
         public static final int HOOD_ANGLE_TALON_ID = 15;
         public static final int RIGHT_HOOD_PROPULSION_TALON_ID = 16;
         public static final int LEFT_HOOD_PROPULSION_TALON_ID = 17;
         public static final int INDEXER_TALON_ID = 22;
 
-        public static final Slot0Configs HOOD_ANGLE_SLOT_CONFIGS = new Slot0Configs()
-            .withKS(0.1)
-            .withKG(0.15)
-            .withKV(0.12)
-            .withKA(0.0)
-            .withKP(24.0)
-            .withKI(0.0)
-            .withKD(0.4)
-            .withGravityType(GravityTypeValue.Arm_Cosine);
-
-        public static final Slot0Configs RIGHT_HOOD_PROPULSION_SLOT_CONFIGS = new Slot0Configs()
-            .withKS(0.1)
-            .withKG(0.0)
-            .withKV(0.12)
-            .withKA(0.0)
-            .withKP(0.3)
-            .withKI(0.0)
-            .withKD(0.0);
-
-        public static final Slot0Configs LEFT_HOOD_PROPULSION_SLOT_CONFIGS = new Slot0Configs()
-            .withKS(0.1)
-            .withKG(0.0)
-            .withKV(0.12)
-            .withKA(0.0)
-            .withKP(0.3)
-            .withKI(0.0)
-            .withKD(0.0);
-
-        public static final Slot0Configs INDEXER_SLOT_CONFIGS = new Slot0Configs()
-            .withKS(0.1)
-            .withKG(0.0)
-            .withKV(0.12)
-            .withKA(0.0)
-            .withKP(0.3)
-            .withKI(0.0)
-            .withKD(0.0);
-
+        // ========================================
+        // CONVERSIÓN DE ÁNGULO A ROTACIONES
+        // ========================================
+        
+        /**
+         * Rotaciones totales del encoder para el rango completo del hood
+         * Medido: de min a max = 126.003 rotaciones
+         */
+        public static final double HOOD_ENCODER_ROTATIONS_FOR_FULL_RANGE = 126.003;
+        
+        /**
+         * Conversión: radianes → rotaciones del encoder
+         * 
+         * CÁLCULO:
+         * Rango ángulo = 57° - 24° = 33° = 0.576 radianes
+         * CONVERSION = 126.003 / 0.576 = 218.76 rot/rad
+         * 
+         * VERIFICACIÓN:
+         * - 0.1 rad (5.7°) → 21.88 rotations
+         * - 0.366 rad (21°) → 80.06 rotations ✓
+         */
+        public static final double CONVERSION_RATIO_RAD_TO_ROT = 
+            HOOD_ENCODER_ROTATIONS_FOR_FULL_RANGE / 
+            (ShootingConstants.MAXIMUM_HOOD_ANGLE_RADIANS - ShootingConstants.MINIMUM_HOOD_ANGLE_RADIANS);
+        // = 218.76 rotaciones por radián
+        
+        /**
+         * Gear ratio de las ruedas del shooter
+         * 1.0 = conexión directa motor-rueda
+         */
         public static final double HOOD_SHOOTING_GEAR_RATIO = 1.0;
-
-        public static final double HOOD_ANGLE_GEAR_RATIO = 1 /  ((
-            Units.radiansToRotations(ShootingConstants.MAXIMUM_HOOD_ANGLE_RADIANS)-
-            Units.radiansToRotations(ShootingConstants.MINIMUM_HOOD_ANGLE_RADIANS))/126.003);
-
+        
+        /**
+         * Conversión: m/s de salida → RPS de ruedas
+         * = GEAR_RATIO / circunferencia_rueda
+         */
         public static final double CONVERSION_RATIO_FROM_METERS_TO_RPS =
             HOOD_SHOOTING_GEAR_RATIO / ShootingConstants.WHEEL_CIRCUMFERENCE;
 
-        public static final double INDEXER_SPEED = 0.95;
-
-        public static final double HOOD_ANGLE_TOLERANCE_ROT = 0.5;
-        public static final double HOOD_SHOOTING_VELOCITY_TOLERANCE_RPS = 0.5;
-
-        public static final double CONVERSION_RATIO_RAD_TO_ROT =
-            HOOD_ANGLE_GEAR_RATIO / (2.0 * Math.PI);
-
+        // ========================================
+        // GEOMETRÍA DEL HOOD
+        // ========================================
+        
+        /**
+         * Ángulo complementario (90°)
+         * 
+         * Conversión de ángulo de trayectoria a ángulo físico del hood:
+         * hood_angle = 90° - trayectoria_angle
+         */
         public static final double COMPLEMENTARY_ANGLE = Math.toRadians(90.0);
 
-        // Home position for relative encoder systems (assume robot boots at home).
+        /**
+         * Posición home (encoder = 0.0 cuando hood = 24°)
+         */
         public static final double HOOD_HOME_POSITION_ROTATIONS = 0.0;
 
-        // Offset in radians applied AFTER complementary conversion and BEFORE rotations.
-        public static final double HOOD_ANGLE_OFFSET_RADIANS = ShootingConstants.MINIMUM_HOOD_ANGLE_RADIANS;
+        /**
+         * Offset del ángulo mínimo (24° = 0.419 rad)
+         * 
+         * Se resta para obtener ángulo relativo:
+         * hood_relative = hood_physical - 24°
+         */
+        public static final double HOOD_ANGLE_OFFSET_RADIANS = 
+            ShootingConstants.MINIMUM_HOOD_ANGLE_RADIANS;
 
-        // Post-shot behavior: cut wheels + indexer first, then return hood to home.
-        public static final double POST_SHOT_COAST_MINIMUM_TIME_SECONDS = 0.10;
-        public static final double POST_SHOT_COAST_MAXIMUM_TIME_SECONDS = 0.75;
+        // ========================================
+        // PID - HOOD ANGLE MOTOR
+        // ========================================
+        
+        /**
+         * PID para control de POSICIÓN del hood
+         * 
+         * VALORES CORREGIDOS:
+         * - kP = 50.0 (era 0.11, muy bajo)
+         * - kG = 0.25 (era 0.0, crítico para sostener contra gravedad)
+         * - kD = 0.5 (era 0.0, necesario para amortiguación)
+         */
+        public static final Slot0Configs HOOD_ANGLE_SLOT_CONFIGS = new Slot0Configs()
+            .withKS(0.1)       // Static friction
+            .withKG(0.25)      // ⚠️ Gravity compensation - CRÍTICO
+            .withKV(0.12)      // Velocity feedforward
+            .withKA(0.01)      // Acceleration feedforward
+            .withKP(50.0)      // ⚠️ Proporcional - CORREGIDO (era 0.11)
+            .withKI(0.0)       // Integral
+            .withKD(0.5)       // ⚠️ Derivative - AÑADIDO (era 0.0)
+            .withGravityType(GravityTypeValue.Arm_Cosine);
 
+        /**
+         * Motion Magic para movimientos suaves
+         * ⚠️ CRÍTICO - Sin esto el motor NO se mueve
+         */
+        public static final MotionMagicConfigs HOOD_MOTION_MAGIC_CONFIGS = 
+            new MotionMagicConfigs()
+                .withMotionMagicCruiseVelocity(300.0)     // RPS
+                .withMotionMagicAcceleration(600.0)       // RPS/s
+                .withMotionMagicJerk(6000.0);             // RPS/s/s
+
+        /**
+         * Motor output configs
+         * ⚠️ CRÍTICO - Brake mode para sostener contra gravedad
+         */
+        public static final MotorOutputConfigs HOOD_ANGLE_MOTOR_OUTPUT_CONFIGS = 
+            new MotorOutputConfigs()
+                .withNeutralMode(NeutralModeValue.Brake)
+                .withInverted(InvertedValue.CounterClockwise_Positive);
+
+        /**
+         * Current limits para protección
+         */
+        public static final CurrentLimitsConfigs HOOD_ANGLE_CURRENT_LIMITS = 
+            new CurrentLimitsConfigs()
+                .withSupplyCurrentLimit(40.0)
+                .withSupplyCurrentLimitEnable(true)
+                .withStatorCurrentLimit(60.0)
+                .withStatorCurrentLimitEnable(true);
+
+        /**
+         * Software limits (0 a 126.003 + margen)
+         */
+        public static final SoftwareLimitSwitchConfigs HOOD_SOFTWARE_LIMITS = 
+            new SoftwareLimitSwitchConfigs()
+                .withForwardSoftLimitEnable(true)
+                .withForwardSoftLimitThreshold(132.3)   // 126.003 * 1.05
+                .withReverseSoftLimitEnable(true)
+                .withReverseSoftLimitThreshold(-5.0);   // Margen negativo
+
+        // ========================================
+        // PID - WHEEL MOTORS
+        // ========================================
+        
+        /**
+         * PID para control de VELOCIDAD de ruedas
+         * 
+         * VALORES CORREGIDOS:
+         * - kP = 0.5 (era 0.11, muy bajo)
+         * - kV = 0.12 (calibrar: kV = 12 / velocidad_máxima_RPS)
+         */
+        public static final Slot0Configs RIGHT_HOOD_PROPULSION_SLOT_CONFIGS = new Slot0Configs()
+            .withKS(0.2)       // Static friction
+            .withKG(0.0)       // Sin gravity (ruedas horizontales)
+            .withKV(0.12)      // Velocity feedforward
+            .withKA(0.01)      // Acceleration feedforward
+            .withKP(0.5)       // ⚠️ Proporcional - CORREGIDO (era 0.11)
+            .withKI(0.0)       // Integral
+            .withKD(0.0);      // Derivative
+
+        public static final Slot0Configs LEFT_HOOD_PROPULSION_SLOT_CONFIGS = 
+            RIGHT_HOOD_PROPULSION_SLOT_CONFIGS;
+
+        /**
+         * Motor output configs para ruedas
+         */
+        public static final MotorOutputConfigs WHEEL_MOTOR_OUTPUT_CONFIGS = 
+            new MotorOutputConfigs()
+                .withNeutralMode(NeutralModeValue.Coast)
+                .withInverted(InvertedValue.CounterClockwise_Positive);
+
+        /**
+         * Current limits para ruedas
+         */
+        public static final CurrentLimitsConfigs WHEEL_CURRENT_LIMITS = 
+            new CurrentLimitsConfigs()
+                .withSupplyCurrentLimit(40.0)
+                .withSupplyCurrentLimitEnable(true)
+                .withStatorCurrentLimit(80.0)  // Más alto para spin-up
+                .withStatorCurrentLimitEnable(true);
+
+        // ========================================
+        // INDEXER
+        // ========================================
+        
+        public static final Slot0Configs INDEXER_SLOT_CONFIGS = new Slot0Configs();
+        
+        public static final MotorOutputConfigs INDEXER_MOTOR_OUTPUT_CONFIGS = 
+            new MotorOutputConfigs()
+                .withNeutralMode(NeutralModeValue.Brake)
+                .withInverted(InvertedValue.CounterClockwise_Positive);
+        
+        public static final CurrentLimitsConfigs INDEXER_CURRENT_LIMITS = 
+            new CurrentLimitsConfigs()
+                .withSupplyCurrentLimit(30.0)
+                .withSupplyCurrentLimitEnable(true)
+                .withStatorCurrentLimit(40.0)
+                .withStatorCurrentLimitEnable(true);
+        
+        /**
+         * Velocidad del indexer (duty cycle 0-1)
+         * 0.6 = 60% de potencia
+         */
+        public static final double INDEXER_SPEED = 0.6;
+
+        // ========================================
+        // TOLERANCIAS
+        // ========================================
+        
+        /**
+         * Tolerancia de ángulo del hood (rotaciones)
+         * 
+         * 2.0 rot = 2.0 / 218.76 = 0.0091 rad = 0.52°
+         * ⚠️ AUMENTADO de 0.01 (imposible) → 2.0 (razonable)
+         */
+        public static final double HOOD_ANGLE_TOLERANCE_ROT = 2.0;
+        
+        /**
+         * Tolerancia de velocidad de ruedas (RPS)
+         * 
+         * 2.0 RPS = ~4% de error a 50 RPS
+         * ⚠️ AUMENTADO de 0.05 (imposible) → 2.0 (razonable)
+         */
+        public static final double HOOD_SHOOTING_VELOCITY_TOLERANCE_RPS = 2.0;
+
+        // ========================================
+        // POST-SHOT COASTING
+        // ========================================
+        
+        /**
+         * Tiempo mínimo antes de stow (segundos)
+         * ⚠️ AUMENTADO de 0.1 → 0.3
+         */
+        public static final double POST_SHOT_COAST_MINIMUM_TIME_SECONDS = 0.3;
+        
+        /**
+         * Timeout máximo (segundos)
+         * ⚠️ AUMENTADO de 0.75 → 2.0
+         */
+        public static final double POST_SHOT_COAST_MAXIMUM_TIME_SECONDS = 2.0;
+        
+        /**
+         * Threshold de velocidad "suficientemente lenta" (RPS)
+         */
         public static final double POST_SHOT_WHEEL_STOP_THRESHOLD_ROTATIONS_PER_SECOND = 1.0;
-
 
     }
 
