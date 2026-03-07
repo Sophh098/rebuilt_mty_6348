@@ -429,8 +429,8 @@ public class Constants {
          *     HoodSubsystem crea un objeto MotorOutputConfigs independiente
          *     para cada rueda usando estas constantes.
          */
-        public static final InvertedValue RIGHT_WHEEL_INVERTED = InvertedValue.CounterClockwise_Positive;
-        public static final InvertedValue LEFT_WHEEL_INVERTED  = InvertedValue.Clockwise_Positive;
+        public static final InvertedValue LEFT_WHEEL_INVERTED = InvertedValue.CounterClockwise_Positive;
+        public static final InvertedValue RIGHT_WHEEL_INVERTED = InvertedValue.Clockwise_Positive;
 
         // ── PID Hood Angle ────────────────────────────────────────────
         /**
@@ -496,21 +496,42 @@ public class Constants {
         /**
          * Ganancias para VelocityTorqueCurrentFOC de las ruedas (Phoenix Pro).
          *
-         * kS  [A]         Corriente de fricción. Aumentar si las ruedas no arrancan.
-         * kV  [A/(rot/s)] Feedforward de velocidad. VALOR MÁS IMPORTANTE.
-         *                 Calibrar: aumentar si las ruedas no alcanzan la velocidad objetivo.
-         * kP  [A/(rot/s)] Proporcional. Corrige el error residual tras kV.
+         * Con TorqueCurrentFOC las unidades son AMPERIOS, no Voltios.
+         * El controlador convierte internamente Amperios → torque → movimiento.
          *
-         * NOTA: Con TorqueCurrentFOC, las unidades son Amperios, no Voltios.
-         *       kV típico con FOC: 0.05 – 0.15 A/(rot/s).
-         *       CALIBRAR con Tuner X → SysId o ajuste manual.
+         * kS  [A]          Corriente mínima para vencer la fricción estática.
+         *                  Con ruedas de shooter (inercia alta): 2–5 A.
+         *                  CALIBRAR: si las ruedas vibran en reposo, reducir.
+         *
+         * kV  [A/(rot/s)]  Feedforward de velocidad — el parámetro MÁS IMPORTANTE.
+         *                  Representa cuántos Amperios se necesitan para mantener
+         *                  1 rot/s en estado estacionario.
+         *
+         *                  CÁLCULO APROXIMADO para Kraken X60:
+         *                    Torque libre ≈ 0 Nm (sin carga a velocidad libre)
+         *                    Con carga (volante de inercia): ~0.3–0.5 A/(rot/s)
+         *                    A 50 RPS → ~15–25 A de feedforward → rueda llega a velocidad
+         *
+         *                  CALIBRAR con Tuner X:
+         *                    1. Poner kV=0, kP=0, kS=0
+         *                    2. Aplicar corriente fija (ej. 20 A) y medir RPS resultante
+         *                    3. kV = corriente_aplicada / RPS_medido
+         *                    Ejemplo: 20 A → 50 RPS → kV = 20/50 = 0.4
+         *
+         * kP  [A/(rot/s)]  Proporcional. Corrige el error residual que deja kV.
+         *                  Típico: 0.5 – 2.0 A/(rot/s).
+         *                  Aumentar si hay error de estado estacionario persistente.
+         *                  Reducir si las ruedas oscilan alrededor de la velocidad objetivo.
+         *
+         * kA  [A/(rot/s²)] Feedforward de aceleración. Ayuda al spin-up.
+         *                  Típico: 0.01 – 0.05.
          */
         public static final Slot0Configs RIGHT_HOOD_PROPULSION_SLOT_CONFIGS = new Slot0Configs()
-            .withKS(0.1)
-            .withKG(0.0)
-            .withKV(0.12)
-            .withKA(0.01)
-            .withKP(0.5)
+            .withKS(3.0)    // ← era 0.1  — suficiente para vencer fricción estática
+            .withKG(0.0)    // Sin compensación de gravedad (ruedas horizontales)
+            .withKV(0.4)    // ← era 0.12 — feedforward principal, ~20A a 50 RPS
+            .withKA(0.02)   // ← era 0.01 — ayuda en el spin-up inicial
+            .withKP(1.5)    // ← era 0.5  — corrige el error residual más agresivamente
             .withKI(0.0)
             .withKD(0.0);
 
@@ -520,13 +541,21 @@ public class Constants {
 
         /**
          * Límites de corriente para las ruedas.
-         * StatorCurrentLimit más alto para spin-up rápido.
+         *
+         * SupplyCurrentLimit [A]: corriente máxima desde la batería.
+         *   60 A — permite picos de spin-up sin fundir el cableado (16 AWG).
+         *   CALIBRAR: si salta el breaker de 40 A, reducir a 35 A.
+         *
+         * StatorCurrentLimit [A]: corriente máxima en el bobinado del motor.
+         *   100 A — Kraken X60 aguanta 120 A estator continuos; 100 A da margen.
+         *   Este límite es el que realmente define el torque máximo de spin-up.
+         *   CALIBRAR: reducir a 80 A si el motor se calienta demasiado.
          */
         public static final CurrentLimitsConfigs WHEEL_CURRENT_LIMITS =
             new CurrentLimitsConfigs()
-                .withSupplyCurrentLimit(40.0)
+                .withSupplyCurrentLimit(60.0)   // ← era 40 A
                 .withSupplyCurrentLimitEnable(true)
-                .withStatorCurrentLimit(80.0)
+                .withStatorCurrentLimit(100.0)  // ← era 80 A — más torque en spin-up
                 .withStatorCurrentLimitEnable(true);
 
         // ── Indexer ───────────────────────────────────────────────────
