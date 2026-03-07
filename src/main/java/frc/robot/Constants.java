@@ -534,7 +534,7 @@ public class Constants {
         public static final MotorOutputConfigs WHEEL_MOTOR_OUTPUT_CONFIGS = 
             new MotorOutputConfigs()
                 .withNeutralMode(NeutralModeValue.Coast)
-                .withInverted(InvertedValue.CounterClockwise_Positive);
+                .withInverted(InvertedValue.Clockwise_Positive);
 
         /**
          * Current limits para ruedas
