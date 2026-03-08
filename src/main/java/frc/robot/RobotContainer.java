@@ -208,7 +208,7 @@ public class RobotContainer {
         // If you have a HoodCmd that uses vision + helper, bind it here.
         //driverController.rightTrigger().whileTrue(new frc.robot.Shooting.HoodCmd(hoodSubsystem, visionSubsystem, shootingHelper));
         //driverController.start().onTrue(Commands.runOnce(() -> hoodSubsystem.zeroHoodPosition()));
-        driverController.leftTrigger().whileTrue(new ShooterMotorTestCmd());
+        driverController.leftTrigger().whileTrue(new ShooterMotorTestCmd(0.0, 0.0, 0.0));
 
     
         
