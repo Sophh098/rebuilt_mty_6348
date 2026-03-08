@@ -22,7 +22,6 @@ import frc.robot.Constants.VisionConstants;
 import frc.robot.Drive.CommandSwerveDrivetrain;
 import frc.robot.Drive.DriveCommands;
 import frc.robot.Drive.generated.TunerConstants;
-import frc.robot.Shooting.HoodSubsystem;
 import frc.robot.Shooting.ShootingHelper;
 import frc.robot.Util.ShooterMotorTestCmd;
 import frc.robot.Util.SparkMaxMotorTestCmd;
@@ -90,7 +89,7 @@ public class RobotContainer {
     private final ShootingHelper shootingHelper =
         new ShootingHelper(FieldCosntants.IS_ANDYMARK_FIELD);
 
-    private final HoodSubsystem hoodSubsystem;
+    //private final HoodSubsystem hoodSubsystem;
 
     // // ---------------- Intake ----------------
 
@@ -119,7 +118,7 @@ public class RobotContainer {
 
     public RobotContainer() {
 
-        hoodSubsystem = new HoodSubsystem();
+        //hoodSubsystem = new HoodSubsystem();
 
         visionSubsystem = createVisionSubsystem();
         configureBindings();
@@ -208,7 +207,7 @@ public class RobotContainer {
         // ---------------- Hood / shooting bindings (example) ----------------
         // If you have a HoodCmd that uses vision + helper, bind it here.
         //driverController.rightTrigger().whileTrue(new frc.robot.Shooting.HoodCmd(hoodSubsystem, visionSubsystem, shootingHelper));
-        driverController.start().onTrue(Commands.runOnce(() -> hoodSubsystem.zeroHoodPosition()));
+        //driverController.start().onTrue(Commands.runOnce(() -> hoodSubsystem.zeroHoodPosition()));
         driverController.leftTrigger().whileTrue(new ShooterMotorTestCmd());
 
     
