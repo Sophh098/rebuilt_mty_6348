@@ -529,7 +529,7 @@ public class Constants {
         public static final Slot0Configs RIGHT_HOOD_PROPULSION_SLOT_CONFIGS = new Slot0Configs()
             .withKS(3.0)    // ← era 0.1  — suficiente para vencer fricción estática
             .withKG(0.0)    // Sin compensación de gravedad (ruedas horizontales)
-            .withKV(0.4)    // ← era 0.12 — feedforward principal, ~20A a 50 RPS
+            .withKV(0.65)    // ← era 0.12 — feedforward principal, ~20A a 50 RPS
             .withKA(0.02)   // ← era 0.01 — ayuda en el spin-up inicial
             .withKP(1.5)    // ← era 0.5  — corrige el error residual más agresivamente
             .withKI(0.0)
@@ -555,7 +555,7 @@ public class Constants {
             new CurrentLimitsConfigs()
                 .withSupplyCurrentLimit(60.0)   // ← era 40 A
                 .withSupplyCurrentLimitEnable(true)
-                .withStatorCurrentLimit(100.0)  // ← era 80 A — más torque en spin-up
+                .withStatorCurrentLimit(120.0)  // ← era 80 A — más torque en spin-up
                 .withStatorCurrentLimitEnable(true);
 
         // ── Indexer ───────────────────────────────────────────────────
@@ -569,7 +569,7 @@ public class Constants {
         public static final MotorOutputConfigs INDEXER_MOTOR_OUTPUT_CONFIGS =
             new MotorOutputConfigs()
                 .withNeutralMode(NeutralModeValue.Brake)
-                .withInverted(InvertedValue.CounterClockwise_Positive);
+                .withInverted(InvertedValue.Clockwise_Positive);
 
         public static final CurrentLimitsConfigs INDEXER_CURRENT_LIMITS =
             new CurrentLimitsConfigs()
@@ -589,19 +589,19 @@ public class Constants {
 
         /**
          * Tolerancia de posición del hood [rotaciones].
-         * 2.0 rot / 106.36 rot·rad⁻¹ ≈ 0.019 rad ≈ 1.1°
+         * 4.0 rot / 106.36 rot·rad⁻¹ ≈ 0.038 rad ≈ 2.2°
          * CALIBRAR: reducir para mayor precisión (readyToShoot tarda más).
          *           Aumentar si readyToShoot nunca se activa.
          */
-        public static final double HOOD_ANGLE_TOLERANCE_ROT = 2.0;
+        public static final double HOOD_ANGLE_TOLERANCE_ROT = 4.0;
 
         /**
          * Tolerancia de velocidad de las ruedas [RPS].
-         * 2.0 RPS ≈ 4% de error a 50 RPS.
+         * 5.0 RPS ≈ 10% de error a 50 RPS.
          * CALIBRAR: reducir para disparar más preciso.
          *           Aumentar si readyToShoot nunca se activa.
          */
-        public static final double HOOD_SHOOTING_VELOCITY_TOLERANCE_RPS = 2.0;
+        public static final double HOOD_SHOOTING_VELOCITY_TOLERANCE_RPS = 5.0;
 
         // ── Post-shot coasting ────────────────────────────────────────
 

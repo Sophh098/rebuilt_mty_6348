@@ -24,6 +24,7 @@ import frc.robot.Drive.DriveCommands;
 import frc.robot.Drive.generated.TunerConstants;
 import frc.robot.Shooting.HoodSubsystem;
 import frc.robot.Shooting.ShootingHelper;
+import frc.robot.Util.ShooterMotorTestCmd;
 import frc.robot.Util.SparkMaxMotorTestCmd;
 import frc.robot.Util.TalonFxMotorTestCmd;
 import frc.robot.Vision.VisionHardwareFactoryImpl;
@@ -206,8 +207,9 @@ public class RobotContainer {
 
         // ---------------- Hood / shooting bindings (example) ----------------
         // If you have a HoodCmd that uses vision + helper, bind it here.
-        driverController.rightTrigger().whileTrue(new frc.robot.Shooting.HoodCmd(hoodSubsystem, visionSubsystem, shootingHelper));
+        //driverController.rightTrigger().whileTrue(new frc.robot.Shooting.HoodCmd(hoodSubsystem, visionSubsystem, shootingHelper));
         driverController.start().onTrue(Commands.runOnce(() -> hoodSubsystem.zeroHoodPosition()));
+        driverController.leftTrigger().whileTrue(new ShooterMotorTestCmd());
 
     
         
